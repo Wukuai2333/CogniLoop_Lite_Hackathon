@@ -1,6 +1,7 @@
 import streamlit as st
 
 from components.layout import page_header
+from content.docs_catalog import OFFICIAL_COLAB_SETUP
 from content.tutorial_content import POSIX_INSTALL, TROUBLESHOOTING_ROWS, WINDOWS_INSTALL
 from utils.install_check import cognee_import_status, python_version_status
 
@@ -21,6 +22,13 @@ def render() -> None:
         "- Terminal access\n"
         "- Optional API key for future interactive AI features"
     )
+
+    st.header("Official Notebook Setup")
+    st.write(
+        "Prefer a guided notebook? Cognee also provides an official Colab setup notebook. "
+        "Open it directly in Colab, then return here to track your local progress."
+    )
+    st.link_button(OFFICIAL_COLAB_SETUP["title"], OFFICIAL_COLAB_SETUP["url"])
 
     tab_windows, tab_posix = st.tabs(["Windows", "macOS / Linux"])
     with tab_windows:

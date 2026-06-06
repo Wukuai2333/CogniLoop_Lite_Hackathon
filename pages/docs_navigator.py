@@ -1,6 +1,7 @@
 import streamlit as st
 
 from components.layout import page_header
+from content.docs_catalog import OFFICIAL_COLAB_SETUP, OFFICIAL_DOC_SECTIONS
 from content.docs_routes import DOC_ROUTES
 from utils.docs_export import all_routes_markdown, route_markdown
 from utils.docs_progress import docs_step_key, load_docs_progress, save_docs_progress
@@ -89,7 +90,7 @@ def render_context(route: dict, step_index: int, step: dict) -> None:
     st.markdown(
         f"""
         <div class="docs-step-context">
-            <span>{route['name']} Route · Step {step_index + 1} of {len(route['steps'])}</span>
+            <span>{route['name']} Route - Step {step_index + 1} of {len(route['steps'])}</span>
             <strong>{step['title']}</strong>
         </div>
         """,
@@ -180,9 +181,21 @@ def render_step(route: dict, progress: dict) -> None:
         render_context(route, step_index, step)
         st.header(step["title"])
         st.write(step["why"])
+        if step.get("beginner_tip"):
+            st.warning(f"Beginner tip: {step['beginner_tip']}")
         st.info(f"Why this matters for hackathon: {step['hackathon_use']}")
         st.success(f"Deliverable: {step['deliverable']}")
         st.link_button("Open Official Docs", step["url"])
+
+        if step.get("checks"):
+            st.markdown("#### Quick Checks")
+            for check in step["checks"]:
+                st.checkbox(check, key=f"docs_quick_check::{key}::{check}")
+
+        if step.get("questions"):
+            st.markdown("#### Questions to Ask Yourself")
+            for question in step["questions"]:
+                st.markdown(f"- {question}")
 
         progress["completed"][key] = st.checkbox(
             "Mark as done",
@@ -211,10 +224,18 @@ def render_step(route: dict, progress: dict) -> None:
         st.subheader("Route Map")
         for index, item in enumerate(route["steps"]):
             marker = "Done" if progress["completed"].get(docs_step_key(route["id"], index)) else "Open"
-            if st.button(f"{index + 1}. {item['title']} · {marker}", key=f"route_step::{route['id']}::{index}", use_container_width=True):
+            if st.button(f"{index + 1}. {item['title']} - {marker}", key=f"route_step::{route['id']}::{index}", use_container_width=True):
                 progress["current_steps"][route["id"]] = index
                 save_docs_progress(progress)
                 st.rerun()
+
+        st.divider()
+        st.subheader("Official Docs Map")
+        for section in OFFICIAL_DOC_SECTIONS:
+            with st.expander(section["section"], expanded=False):
+                st.caption(section["goal"])
+                for label, url in section["pages"]:
+                    st.link_button(label, url, use_container_width=True)
 
         st.divider()
         st.subheader("Export")
@@ -249,7 +270,12 @@ def render() -> None:
         "Cognee's official documentation remains the source of truth. This page adds a companion layer: "
         "route selection, task framing, notes, bookmarks, and exportable project context."
     )
-    st.caption("Docs index: https://docs.cognee.ai/llms.txt")
+    top_a, top_b = st.columns([0.68, 0.32])
+    with top_a:
+        st.caption("Docs index for agents and LLM tools: https://docs.cognee.ai/llms.txt")
+    with top_b:
+        st.link_button(OFFICIAL_COLAB_SETUP["title"], OFFICIAL_COLAB_SETUP["url"], use_container_width=True)
+    st.caption(OFFICIAL_COLAB_SETUP["description"])
 
     route = render_route_selector(progress)
     st.caption(f"Best for: {route['best_for']}")

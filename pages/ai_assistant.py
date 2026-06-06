@@ -3,11 +3,14 @@ import streamlit as st
 from components.layout import page_header
 from utils.assistant_runtime import (
     cognee_status,
+    demo_document_inventory,
     key_status,
     load_demo_documents,
     normalize_recall_result,
     recall_answer,
     remember_demo_documents,
+    reset_local_cognee_storage,
+    user_friendly_error,
 )
 
 
@@ -38,6 +41,16 @@ def render() -> None:
         st.write("Create a local `.env` file next to `app.py`. Do not commit it.")
         st.code("LLM_API_KEY=your_api_key_here\nOPENAI_API_KEY=your_api_key_here", language="dotenv")
 
+    with st.expander("Official Cognee setup notebook", expanded=False):
+        st.write(
+            "Cognee provides an official Colab setup notebook. Open it when you want a guided notebook-style setup. "
+            "CogniLoop keeps the link here instead of embedding the notebook because Colab is best opened directly."
+        )
+        st.link_button(
+            "Open Cognee Colab Setup",
+            "https://colab.research.google.com/drive/1HRrzIvzcbwrESVfX76wJLKmtIg00SUga?usp=sharing",
+        )
+
     disabled = not key_ok or not cognee_ok
     documents = load_demo_documents()
 
@@ -45,12 +58,9 @@ def render() -> None:
     st.write("This loads Markdown files from `/data` into a small project-local Cognee demo dataset.")
     with st.expander(f"Dataset preview ({len(documents)} Markdown files)", expanded=False):
         if documents:
-            st.write(
-                "The current sample dataset includes Cognee onboarding notes plus a small business crisis mini dataset."
-            )
-            for document in documents:
-                first_line = document.splitlines()[0].replace("# Source: ", "")
-                st.markdown(f"- `{first_line}`")
+            st.write("The current sample dataset includes local Cognee summaries plus a small business crisis mini dataset.")
+            st.caption("The `cognee_*.md` files are our short local summaries/placeholders, not official Cognee docs.")
+            st.table(demo_document_inventory())
         else:
             st.warning("No Markdown documents found in `/data`.")
     st.caption(
@@ -62,7 +72,18 @@ def render() -> None:
             try:
                 st.success(remember_demo_documents())
             except Exception as exc:
-                st.error(f"Cognee remember failed: {exc}")
+                st.error(f"Cognee remember failed: {user_friendly_error(exc)}")
+
+    with st.expander("Troubleshooting local Cognee storage", expanded=False):
+        st.write(
+            "If you see a database lock error, reset the project-local Cognee store. "
+            "This deletes the local demo memory only; it does not touch `.env` or your source files."
+        )
+        if st.button("Reset local Cognee storage"):
+            try:
+                st.success(reset_local_cognee_storage())
+            except Exception as exc:
+                st.error(f"Reset failed: {exc}")
 
     st.subheader("2. Ask the local test assistant")
     question = st.text_area(
@@ -92,4 +113,4 @@ def render() -> None:
                         with st.expander("Raw result"):
                             st.json(normalized["raw"])
             except Exception as exc:
-                st.error(f"Cognee recall failed: {exc}")
+                st.error(f"Cognee recall failed: {user_friendly_error(exc)}")

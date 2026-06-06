@@ -2,6 +2,7 @@ from pathlib import Path
 import asyncio
 import inspect
 import os
+import shutil
 from typing import Any
 
 from dotenv import load_dotenv
@@ -23,6 +24,14 @@ def ensure_cognee_local_dirs() -> None:
         COGNEE_CACHE_DIR,
     ]:
         directory.mkdir(parents=True, exist_ok=True)
+
+
+def reset_local_cognee_storage() -> str:
+    for directory in [COGNEE_SYSTEM_DIR, COGNEE_DATA_DIR, COGNEE_CACHE_DIR]:
+        if directory.exists():
+            shutil.rmtree(directory)
+    ensure_cognee_local_dirs()
+    return "Local Cognee storage was reset. Remember /data documents again before asking questions."
 
 
 def run_maybe_async(value: Any) -> Any:
@@ -75,6 +84,29 @@ def load_demo_documents(data_dir: Path = PROJECT_ROOT / "data") -> list[str]:
         if text:
             documents.append(f"# Source: {path.name}\n\n{text}")
     return documents
+
+
+def demo_document_inventory(data_dir: Path = PROJECT_ROOT / "data") -> list[dict[str, str]]:
+    inventory: list[dict[str, str]] = []
+    for path in sorted(data_dir.glob("*.md")):
+        source_type = "Sample dataset"
+        if path.name.startswith("cognee_") or path.name == "sponsor_docs_placeholder.md":
+            source_type = "Local summary / placeholder"
+        if "public_sources" in path.name:
+            source_type = "Public source index"
+        inventory.append({"name": path.name, "type": source_type})
+    return inventory
+
+
+def user_friendly_error(exc: Exception) -> str:
+    message = str(exc)
+    if "Could not set lock" in message or "lock" in message.lower():
+        return (
+            "Cognee could not lock the local graph database. This usually means a previous run still has the "
+            "local store open or the local store needs a reset. Try the reset button below, then remember the "
+            "documents again."
+        )
+    return message
 
 
 def remember_demo_documents() -> str:

@@ -18,6 +18,8 @@ The AI Assistant page stays disabled until a key is present in local `.env` or e
 
 The assistant demo ingests local Markdown files from `/data`, including Cognee onboarding notes and a small business crisis mini dataset. Replace these files with your own project materials to turn the app into a project-specific Cognee template.
 
+The `cognee_*.md` files are short local summaries/placeholders written for this MVP. They are not copies of the official Cognee documentation. Use the Docs Navigator and the official links for authoritative details.
+
 ## Setup
 
 ```powershell
