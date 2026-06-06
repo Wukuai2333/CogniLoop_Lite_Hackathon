@@ -38,34 +38,47 @@ def inject_selection_assistant(page_key: str) -> None:
                     z-index: 2147483647;
                     display: none;
                     align-items: center;
-                    gap: 0.45rem;
+                    gap: 0.65rem;
                     width: max-content;
-                    max-width: min(320px, calc(100vw - 2rem));
-                    padding: 0.42rem 0.48rem;
-                    border: 1px solid rgba(63, 185, 80, 0.72);
-                    border-radius: 999px;
-                    background: rgba(13, 17, 23, 0.96);
+                    max-width: min(360px, calc(100vw - 2rem));
+                    padding: 0.62rem 0.68rem;
+                    border: 1px solid rgba(46, 160, 67, 0.78);
+                    border-radius: 8px;
+                    background: rgba(13, 17, 23, 0.98);
                     color: #ffffff;
-                    font: 700 12px/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                    font: 600 12px/1.25 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
                     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.34);
                     backdrop-filter: blur(8px);
                 }}
                 #${{barId}} .cogniloop-selection-preview {{
-                    max-width: 145px;
+                    max-width: 170px;
                     color: #c9d1d9;
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
+                    font-weight: 700;
+                }}
+                #${{barId}} .cogniloop-selection-preview span {{
+                    display: block;
+                    color: #8b949e;
+                    font-size: 0.68rem;
                     font-weight: 600;
+                    margin-bottom: 0.15rem;
+                }}
+                #${{barId}} .cogniloop-selection-preview strong {{
+                    display: block;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
                 }}
                 #${{barId}} a {{
                     display: inline-flex;
                     align-items: center;
-                    border: 1px solid rgba(63, 185, 80, 0.72);
-                    border-radius: 999px;
+                    border: 1px solid #2ea043;
+                    border-radius: 8px;
                     background: #238636;
                     color: #ffffff;
-                    padding: 0.42rem 0.58rem;
+                    padding: 0.5rem 0.68rem;
                     font-weight: 800;
                     text-decoration: none;
                     cursor: pointer;
@@ -82,8 +95,8 @@ def inject_selection_assistant(page_key: str) -> None:
                 bar = parentDoc.createElement("div");
                 bar.id = barId;
                 bar.innerHTML = `
-                    <div class="cogniloop-selection-preview" data-role="preview"></div>
-                    <a href="#" data-role="ask">Ask Assistant</a>
+                    <div class="cogniloop-selection-preview"><span>Selected text</span><strong data-role="preview"></strong></div>
+                    <a href="#" data-role="ask" style="display:inline-flex;align-items:center;border:1px solid #2ea043;border-radius:8px;background:#238636;color:#ffffff;padding:0.5rem 0.68rem;font-weight:800;text-decoration:none;cursor:pointer;white-space:nowrap;">Ask Assistant</a>
                 `;
                 parentDoc.body.appendChild(bar);
             }}
@@ -130,8 +143,8 @@ def inject_selection_assistant(page_key: str) -> None:
                 targetUrl.hash = "cogniloop-contextual-assistant";
                 bar.querySelector('[data-role="ask"]').setAttribute("href", targetUrl.toString());
 
-                left = Math.min(Math.max(left, 12), parentWindow.innerWidth - 324);
-                top = Math.min(Math.max(top, 12), parentWindow.innerHeight - 64);
+                left = Math.min(Math.max(left, 12), parentWindow.innerWidth - 364);
+                top = Math.min(Math.max(top, 12), parentWindow.innerHeight - 72);
                 bar.style.left = `${{left}}px`;
                 bar.style.top = `${{top}}px`;
                 bar.style.display = "inline-flex";
