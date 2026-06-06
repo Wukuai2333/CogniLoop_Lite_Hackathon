@@ -49,6 +49,13 @@ def render_selection_capture_banner(page_key: str) -> None:
         st.success("Selected text captured. Review or edit it in Ask Assistant below.")
         preview = selected_text if len(selected_text) <= 260 else f"{selected_text[:260]}..."
         st.caption(preview)
+        key_ok, _ = key_status()
+        if not key_ok:
+            st.caption(
+                "API key not added yet. The assistant is an optional local experiment; the learning pages and exports "
+                "still work without it."
+            )
+            st.link_button("How to add a local API key", "?page=ai_assistant")
         if st.button("Clear selected text", key=f"clear_selection_notice::{page_key}"):
             context_key, _ = context_keys(page_key)
             st.session_state.pop(context_key, None)
@@ -75,6 +82,7 @@ def render_no_key_tutorial(key_message: str) -> None:
         )
         st.code("LLM_API_KEY=your_api_key_here\nOPENAI_API_KEY=your_api_key_here", language="dotenv")
         st.caption(f"Current local status: {key_message}")
+        st.link_button("Open AI Assistant setup page", "?page=ai_assistant")
 
 
 def inject_selection_assistant(page_key: str) -> None:

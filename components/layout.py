@@ -77,12 +77,24 @@ def render_sidebar() -> str:
     render_sidebar_styles()
     st.sidebar.title("CogniLoop Lite")
     st.sidebar.caption("Hosted guide. Local-first demo.")
-    choice = st.sidebar.radio("Navigate", list(PAGES.keys()), label_visibility="collapsed")
+    labels = list(PAGES.keys())
+    requested_page = st.query_params.get("page", "")
+    default_key = requested_page if requested_page in PAGES.values() else "home"
+    default_label = next(label for label, key in PAGES.items() if key == default_key)
+    choice = st.sidebar.radio(
+        "Navigate",
+        labels,
+        index=labels.index(default_label),
+        label_visibility="collapsed",
+    )
+    selected_key = PAGES[choice]
+    if st.query_params.get("page") != selected_key:
+        st.query_params["page"] = selected_key
     st.sidebar.divider()
     st.sidebar.caption(
         "Public demos ship with `.env.example` only. Clone locally and create `.env` to enable Cognee assistant tests."
     )
-    return PAGES[choice]
+    return selected_key
 
 
 def page_header(title: str, subtitle: str | None = None) -> None:
