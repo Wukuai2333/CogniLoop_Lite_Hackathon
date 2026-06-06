@@ -31,7 +31,7 @@ def reset_local_cognee_storage() -> str:
         if directory.exists():
             shutil.rmtree(directory)
     ensure_cognee_local_dirs()
-    return "Local Cognee storage was reset. Remember /data documents again before asking questions."
+    return "Local Cognee storage was reset. Initialize /data documents again before asking questions."
 
 
 def run_maybe_async(value: Any) -> Any:
@@ -46,6 +46,13 @@ def run_maybe_async(value: Any) -> Any:
     if loop.is_running():
         raise RuntimeError("Cognee returned an async task while an event loop is already running.")
     return loop.run_until_complete(value)
+
+
+async def initialize_cognee_dataset(documents: list[str]) -> None:
+    import cognee
+
+    await cognee.add(documents, dataset_name=DEMO_DATASET)
+    await cognee.cognify(datasets=[DEMO_DATASET])
 
 
 def load_assistant_env() -> None:
@@ -79,7 +86,14 @@ def cognee_status() -> tuple[bool, str]:
 
 def load_demo_documents(data_dir: Path = PROJECT_ROOT / "data") -> list[str]:
     documents: list[str] = []
-    for path in sorted(data_dir.glob("*.md")):
+    preferred_files = [
+        "cognee_intro.md",
+        "cognee_installation.md",
+        "cognee_quickstart.md",
+        "business_crisis_sample_dataset.md",
+    ]
+    paths = [data_dir / name for name in preferred_files if (data_dir / name).exists()]
+    for path in paths:
         text = path.read_text(encoding="utf-8").strip()
         if text:
             documents.append(f"# Source: {path.name}\n\n{text}")
@@ -111,6 +125,16 @@ def user_friendly_error(exc: Exception) -> str:
             "Cognee has not been initialized yet. Run `Initialize /data documents` first. "
             "That step adds the local Markdown files and builds Cognee memory before recall can answer."
         )
+    if "bound to a different event loop" in message:
+        return (
+            "Cognee hit an async event-loop conflict while initializing local memory. "
+            "Restart Streamlit, reset local Cognee storage, and initialize again."
+        )
+    if "Embedding endpoint timed out" in message or "Embedding request timed out" in message:
+        return (
+            "The embedding step timed out while building local Cognee memory. Check that your provider key is valid, "
+            "then try initializing the smaller default dataset again."
+        )
     return message
 
 
@@ -120,10 +144,7 @@ def remember_demo_documents() -> str:
     if not documents:
         return "No Markdown documents found in /data."
 
-    import cognee
-
-    run_maybe_async(cognee.add(documents, dataset_name=DEMO_DATASET))
-    run_maybe_async(cognee.cognify(datasets=[DEMO_DATASET]))
+    run_maybe_async(initialize_cognee_dataset(documents))
     return f"Initialized {len(documents)} local Markdown document(s) in dataset `{DEMO_DATASET}`."
 
 
