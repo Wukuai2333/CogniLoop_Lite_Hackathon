@@ -164,6 +164,12 @@ def render_stage_picker(progress: dict) -> None:
     st.caption(f"{progress['current_step'] + 1} / {len(stage['items'])} in this stage")
 
 
+def render_export_hint() -> None:
+    st.caption(
+        "Export Markdown to align with agents: current decisions, notes, and progress become cleaner prompting context."
+    )
+
+
 def render_reader(progress: dict) -> None:
     clamp_position(progress)
     stage_index = progress["current_stage"]
@@ -249,6 +255,7 @@ def render_reader(progress: dict) -> None:
         render_stage_picker(progress)
         st.divider()
         st.subheader("Current Stage Notes")
+        render_export_hint()
         st.download_button(
             "Download Stage Markdown",
             data=stage_markdown(stage_index, progress),

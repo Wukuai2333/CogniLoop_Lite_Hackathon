@@ -71,6 +71,14 @@ def render_autosave() -> None:
     )
 
 
+def render_agent_alignment_hint() -> None:
+    st.info(
+        "Hint: keep your agents on the same page as you. Export your current progress as Markdown, including notes "
+        "from each step, so you can give agents clearer structure, more token-efficient context, and less chance of "
+        "losing the thread during implementation."
+    )
+
+
 def render_route_selector(progress: dict) -> dict:
     route_names = [route["name"] for route in DOC_ROUTES]
     current_route = route_by_id(progress["selected_route"])
@@ -261,6 +269,7 @@ def render_step(route: dict, progress: dict) -> None:
 
         st.divider()
         st.subheader("Export")
+        render_agent_alignment_hint()
         st.download_button(
             "Download This Route",
             data=route_markdown(route, progress),
@@ -298,6 +307,7 @@ def render() -> None:
     with top_b:
         st.link_button(OFFICIAL_COLAB_SETUP["title"], OFFICIAL_COLAB_SETUP["url"], use_container_width=True)
     st.caption(OFFICIAL_COLAB_SETUP["description"])
+    render_agent_alignment_hint()
 
     route = render_route_selector(progress)
     st.caption(f"Best for: {route['best_for']}")

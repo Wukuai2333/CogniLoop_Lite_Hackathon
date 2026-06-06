@@ -5,6 +5,13 @@ from components.layout import page_header
 from utils.persistence import load_progress, save_progress
 
 
+def render_agent_alignment_hint() -> None:
+    st.info(
+        "Hint: keep your agents on the same page as you. Download your progress Markdown with notes from each step "
+        "to create clearer prompts, reduce repeated context, and avoid losing track of decisions."
+    )
+
+
 def render() -> None:
     page_header("Timeline Checklist", "A reading-style progress guide with checks and notes.")
 
@@ -14,6 +21,7 @@ def render() -> None:
     st.write(
         "Move one substep at a time, add notes under any check, and your progress saves locally as you work."
     )
+    render_agent_alignment_hint()
 
     render_reader(st.session_state.saved_progress)
     save_progress(st.session_state.saved_progress)
