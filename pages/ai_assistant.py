@@ -64,6 +64,18 @@ def render_connection_status(message: str) -> None:
     )
 
 
+def render_runtime_overview() -> None:
+    with st.container(border=True):
+        st.markdown("#### Runtime Flow")
+        st.markdown(
+            "1. Read local `.env` for provider credentials.\n"
+            "2. Load Markdown files from `data`.\n"
+            "3. Build or query local Cognee memory.\n"
+            "4. Call the configured provider only when Cognee needs model output."
+        )
+        st.caption("No key is typed into this page. The assistant only reads local environment configuration.")
+
+
 def render() -> None:
     page_header("AI Assistant", "Local `.env`-only Cognee test helper for the demo dataset.")
     render_optional_notice()
@@ -93,6 +105,7 @@ def render() -> None:
 
     disabled = not key_ok or not cognee_ok
     documents = load_demo_documents()
+    render_runtime_overview()
 
     st.subheader("1. Initialize local demo documents")
     st.write("This loads Markdown files from the `data` folder into a small project-local Cognee demo dataset.")
@@ -109,12 +122,16 @@ def render() -> None:
         "`.data_storage`, and `.cognee_cache`. This makes the demo easy to inspect or reset."
     )
     if st.button("Initialize /data documents", disabled=disabled):
-        render_connection_status("Connecting the local Cognee runtime to your project data and provider API via `.env`")
-        with st.spinner("Building local Cognee memory from data files..."):
+        with st.status("Connecting local Cognee runtime...", expanded=True) as status:
             try:
+                render_connection_status("Reading `.env`, loading `data`, and building local Cognee memory")
+                st.write("Loading Markdown files from `data`.")
+                st.write("Running Cognee `add()` and `cognify()`.")
                 st.success(remember_demo_documents())
+                status.update(label="Local Cognee memory initialized.", state="complete")
             except Exception as exc:
                 st.error(f"Cognee initialization failed: {user_friendly_error(exc)}")
+                status.update(label="Cognee initialization failed.", state="error")
 
     with st.expander("Troubleshooting local Cognee storage", expanded=False):
         st.write(
@@ -136,9 +153,11 @@ def render() -> None:
         height=100,
     )
     if st.button("Ask", disabled=disabled or not question.strip()):
-        render_connection_status("Querying local Cognee memory, then calling the configured provider through `.env`")
-        with st.spinner("Retrieving an answer from the local demo dataset..."):
+        with st.status("Querying local Cognee memory...", expanded=True) as status:
             try:
+                render_connection_status("Retrieving context locally, then using the provider configured through `.env`")
+                st.write("Searching the project-local Cognee dataset.")
+                st.write("Calling the configured provider only if Cognee needs model output.")
                 results = recall_answer(question.strip())
                 st.markdown("### Result")
                 if not results:
@@ -157,5 +176,7 @@ def render() -> None:
 
                         with st.expander("Raw result"):
                             st.json(normalized["raw"])
+                status.update(label="Answer retrieved.", state="complete")
             except Exception as exc:
                 st.error(f"Cognee recall failed: {user_friendly_error(exc)}")
+                status.update(label="Cognee recall failed.", state="error")
