@@ -58,7 +58,7 @@ def render() -> None:
     st.subheader("Recommended Workflow")
     steps = [
         ("Learn", "Use Cognee Tutorial and Docs Navigator to understand setup, concepts, and official references."),
-        ("Plan", "Use Checklist and Conversation-first Workflow to define your target user, scope, blockers, and demo."),
+        ("Plan", "Use Task Progress Checklist and Conversation-first Workflow to define your target user, scope, blockers, and demo."),
         ("Initialize", "Add Markdown files to `data`, then initialize them from AI Assistant with Cognee `add()` and `cognify()`."),
         ("Ask", "Use AI Assistant or the page-level Ask panel to query local Cognee memory and save Q&A history."),
         ("Export", "Download checklist notes, docs route notes, and Q&A history for your README or demo script."),

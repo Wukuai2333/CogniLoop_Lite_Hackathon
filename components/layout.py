@@ -5,7 +5,7 @@ PAGES = {
     "Home": "home",
     "Cognee Tutorial": "tutorial",
     "Docs Navigator": "docs_navigator",
-    "Checklist": "checklist",
+    "Task Progress Checklist": "checklist",
     "AI Assistant": "ai_assistant",
     "Conversation-first Workflow": "conversation_first",
     "Customize Your Own Cognee": "customize",

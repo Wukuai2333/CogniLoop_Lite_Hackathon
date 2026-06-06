@@ -144,7 +144,7 @@ Key message:
 
 This is the companion layer: docs become an event workflow.
 
-### Checklist
+### Task Progress Checklist
 
 Purpose: Track participant progress through the event.
 
@@ -251,7 +251,7 @@ Learning support should be attached to the workflow, not hidden in a separate ch
 
 1. Start on Home and explain the two modes: hosted guide and local full demo.
 2. Open Docs Navigator and show how official Cognee docs become hackathon routes.
-3. Open Checklist and show progress, notes, bookmarks, and export.
+3. Open Task Progress Checklist and show progress, notes, bookmarks, and export.
 4. Open AI Assistant and explain the safety boundary: no API key input in the public page; full test uses local `.env`.
 5. If running locally with a key, initialize `/data` and ask the default question.
 6. Open Customize page and explain how participants can replace the sample dataset.

@@ -13,7 +13,7 @@ def render_agent_alignment_hint() -> None:
 
 
 def render() -> None:
-    page_header("Timeline Checklist", "A reading-style progress guide with checks and notes.")
+    page_header("Task Progress Checklist", "A reading-style progress guide with tasks, checks, and notes.")
 
     if "saved_progress" not in st.session_state:
         st.session_state.saved_progress = load_progress()
