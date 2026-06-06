@@ -1,4 +1,6 @@
 from pathlib import Path
+import asyncio
+import inspect
 import os
 from typing import Any
 
@@ -6,6 +8,20 @@ from dotenv import load_dotenv
 
 
 DEMO_DATASET = "cogniloop_lite_demo"
+
+
+def run_maybe_async(value: Any) -> Any:
+    if not inspect.isawaitable(value):
+        return value
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(value)
+
+    if loop.is_running():
+        raise RuntimeError("Cognee returned an async task while an event loop is already running.")
+    return loop.run_until_complete(value)
 
 
 def load_assistant_env() -> None:
@@ -49,7 +65,7 @@ def remember_demo_documents() -> str:
 
     import cognee
 
-    cognee.remember(documents, dataset_name=DEMO_DATASET)
+    run_maybe_async(cognee.remember(documents, dataset_name=DEMO_DATASET))
     return f"Remembered {len(documents)} local Markdown document(s) in dataset `{DEMO_DATASET}`."
 
 
@@ -57,7 +73,7 @@ def recall_answer(question: str) -> list[Any]:
     load_assistant_env()
     import cognee
 
-    return cognee.recall(question, datasets=[DEMO_DATASET], top_k=5)
+    return run_maybe_async(cognee.recall(question, datasets=[DEMO_DATASET], top_k=5))
 
 
 def format_recall_results(results: list[Any]) -> str:
