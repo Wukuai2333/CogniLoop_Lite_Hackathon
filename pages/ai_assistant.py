@@ -94,8 +94,9 @@ def render() -> None:
     disabled = not key_ok or not cognee_ok
     documents = load_demo_documents()
 
-    st.subheader("1. Remember local demo documents")
+    st.subheader("1. Initialize local demo documents")
     st.write("This loads Markdown files from the `data` folder into a small project-local Cognee demo dataset.")
+    st.caption("Under the hood: Cognee runs `add()` and `cognify()` first. After that, `recall()` can answer questions.")
     with st.expander(f"Dataset preview ({len(documents)} Markdown files)", expanded=False):
         if documents:
             st.write("The current sample dataset includes local Cognee summaries plus a small business crisis mini dataset.")
@@ -107,13 +108,13 @@ def render() -> None:
         "Template note: Cognee's local demo storage is kept in project folders: `.cognee_system`, "
         "`.data_storage`, and `.cognee_cache`. This makes the demo easy to inspect or reset."
     )
-    if st.button("Remember /data documents", disabled=disabled):
+    if st.button("Initialize /data documents", disabled=disabled):
         render_connection_status("Connecting the local Cognee runtime to your project data and provider API via `.env`")
         with st.spinner("Building local Cognee memory from data files..."):
             try:
                 st.success(remember_demo_documents())
             except Exception as exc:
-                st.error(f"Cognee remember failed: {user_friendly_error(exc)}")
+                st.error(f"Cognee initialization failed: {user_friendly_error(exc)}")
 
     with st.expander("Troubleshooting local Cognee storage", expanded=False):
         st.write(
@@ -128,6 +129,7 @@ def render() -> None:
                 st.error(f"Reset failed: {exc}")
 
     st.subheader("2. Ask the local test assistant")
+    st.caption("If this is a fresh run or you just reset storage, initialize `/data` first before asking.")
     question = st.text_area(
         "Question",
         value="What is Cognee and how does it help hackathon participants?",

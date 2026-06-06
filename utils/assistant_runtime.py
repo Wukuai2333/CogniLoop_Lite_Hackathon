@@ -106,6 +106,11 @@ def user_friendly_error(exc: Exception) -> str:
             "local store open or the local store needs a reset. Try the reset button below, then remember the "
             "documents again. If it still happens, restart the Streamlit app so Windows releases the database lock."
         )
+    if "Recall prerequisites not met" in message or "no database/default user found" in message:
+        return (
+            "Cognee has not been initialized yet. Run `Initialize /data documents` first. "
+            "That step adds the local Markdown files and builds Cognee memory before recall can answer."
+        )
     return message
 
 
@@ -117,8 +122,9 @@ def remember_demo_documents() -> str:
 
     import cognee
 
-    run_maybe_async(cognee.remember(documents, dataset_name=DEMO_DATASET))
-    return f"Remembered {len(documents)} local Markdown document(s) in dataset `{DEMO_DATASET}`."
+    run_maybe_async(cognee.add(documents, dataset_name=DEMO_DATASET))
+    run_maybe_async(cognee.cognify(datasets=[DEMO_DATASET]))
+    return f"Initialized {len(documents)} local Markdown document(s) in dataset `{DEMO_DATASET}`."
 
 
 def recall_answer(question: str) -> list[Any]:
