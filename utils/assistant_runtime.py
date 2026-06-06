@@ -204,9 +204,10 @@ def normalize_recall_result(result: Any) -> dict[str, Any]:
     else:
         data = {"text": str(result)}
 
+    answer_value = data.get("answer")
     raw = data.get("raw")
     raw_value = raw.get("value") if isinstance(raw, dict) else None
-    text = data.get("text") or raw_value or str(result)
+    text = answer_value or data.get("text") or raw_value or str(result)
 
     return {
         "answer": text,

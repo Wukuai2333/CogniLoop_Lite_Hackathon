@@ -64,6 +64,38 @@ def render_connection_status(message: str) -> None:
     )
 
 
+def render_action_styles() -> None:
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stButton"] > button {
+            min-height: 3rem;
+            font-weight: 700;
+            border-width: 1px;
+        }
+        div[data-testid="stTextArea"] textarea {
+            border: 1px solid rgba(47, 129, 247, 0.55);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .assistant-action-hint {
+            border-left: 4px solid #2f81f7;
+            background: rgba(47, 129, 247, 0.10);
+            padding: 0.85rem 1rem;
+            border-radius: 6px;
+            margin: 0.7rem 0 1rem 0;
+        }
+        .assistant-answer {
+            font-size: 1.02rem;
+            line-height: 1.65;
+            padding: 0.5rem 0;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_runtime_overview() -> None:
     with st.container(border=True):
         st.markdown("#### Runtime Flow")
@@ -78,6 +110,7 @@ def render_runtime_overview() -> None:
 
 def render() -> None:
     page_header("AI Assistant", "Local `.env`-only Cognee test helper for the demo dataset.")
+    render_action_styles()
     render_optional_notice()
 
     key_ok, key_message = key_status()
@@ -110,6 +143,10 @@ def render() -> None:
     st.subheader("1. Initialize local demo documents")
     st.write("This loads Markdown files from the `data` folder into a small project-local Cognee demo dataset.")
     st.caption("Under the hood: Cognee runs `add()` and `cognify()` first. After that, `recall()` can answer questions.")
+    st.markdown(
+        "<div class='assistant-action-hint'><strong>Start here:</strong> initialize the local dataset before asking questions.</div>",
+        unsafe_allow_html=True,
+    )
     with st.expander(f"Dataset preview ({len(documents)} Markdown files)", expanded=False):
         if documents:
             st.write("The current sample dataset includes local Cognee summaries plus a small business crisis mini dataset.")
@@ -121,7 +158,7 @@ def render() -> None:
         "Template note: Cognee's local demo storage is kept in project folders: `.cognee_system`, "
         "`.data_storage`, and `.cognee_cache`. This makes the demo easy to inspect or reset."
     )
-    if st.button("Initialize /data documents", disabled=disabled):
+    if st.button("Initialize /data documents", disabled=disabled, type="primary", use_container_width=False):
         with st.status("Connecting local Cognee runtime...", expanded=True) as status:
             try:
                 render_connection_status("Reading `.env`, loading `data`, and building local Cognee memory")
@@ -152,7 +189,7 @@ def render() -> None:
         value="What is Cognee and how does it help hackathon participants?",
         height=100,
     )
-    if st.button("Ask", disabled=disabled or not question.strip()):
+    if st.button("Ask", disabled=disabled or not question.strip(), type="primary"):
         with st.status("Querying local Cognee memory...", expanded=True) as status:
             try:
                 render_connection_status("Retrieving context locally, then using the provider configured through `.env`")
@@ -166,7 +203,10 @@ def render() -> None:
                     normalized = normalize_recall_result(result)
                     with st.container(border=True):
                         st.markdown(f"#### Answer {index}")
-                        st.write(normalized["answer"])
+                        st.markdown(
+                            f"<div class='assistant-answer'>{normalized['answer']}</div>",
+                            unsafe_allow_html=True,
+                        )
 
                         meta_cols = st.columns(4)
                         meta_cols[0].metric("Source", normalized["source"] or "n/a")
