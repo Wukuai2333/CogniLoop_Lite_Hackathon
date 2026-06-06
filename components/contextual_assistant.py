@@ -57,6 +57,26 @@ def render_selection_capture_banner(page_key: str) -> None:
             st.rerun()
 
 
+def render_no_key_tutorial(key_message: str) -> None:
+    st.info(
+        "This assistant is a tiny experimental add-on. You can skip it completely and still use the tutorial, "
+        "docs routes, task progress tracker, notes, and Markdown exports."
+    )
+    with st.expander("How to try the assistant locally", expanded=True):
+        st.caption(
+            "Sorry for the extra setup - this part is still a very early local experiment. "
+            "We do not collect API keys in the web page."
+        )
+        st.markdown(
+            "1. Clone or download the GitHub repo.\n"
+            "2. Create a local `.env` file next to `app.py`.\n"
+            "3. Add your own API key.\n"
+            "4. Restart Streamlit and initialize `/data` from the AI Assistant page."
+        )
+        st.code("LLM_API_KEY=your_api_key_here\nOPENAI_API_KEY=your_api_key_here", language="dotenv")
+        st.caption(f"Current local status: {key_message}")
+
+
 def inject_selection_assistant(page_key: str) -> None:
     page_key_json = json.dumps(page_key)
     components.html(
@@ -255,7 +275,7 @@ def render_contextual_assistant(page_key: str) -> None:
         )
         key_ok, key_message = key_status()
         if not key_ok:
-            st.warning(key_message)
+            render_no_key_tutorial(key_message)
 
         selected_text = st.text_area(
             "Selected or copied text",
