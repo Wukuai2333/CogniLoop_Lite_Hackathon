@@ -8,6 +8,21 @@ from dotenv import load_dotenv
 
 
 DEMO_DATASET = "cogniloop_lite_demo"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+COGNEE_SYSTEM_DIR = PROJECT_ROOT / ".cognee_system"
+COGNEE_DATA_DIR = PROJECT_ROOT / ".data_storage"
+COGNEE_CACHE_DIR = PROJECT_ROOT / ".cognee_cache"
+
+
+def ensure_cognee_local_dirs() -> None:
+    for directory in [
+        COGNEE_SYSTEM_DIR,
+        COGNEE_SYSTEM_DIR / "databases",
+        COGNEE_SYSTEM_DIR / "logs",
+        COGNEE_DATA_DIR,
+        COGNEE_CACHE_DIR,
+    ]:
+        directory.mkdir(parents=True, exist_ok=True)
 
 
 def run_maybe_async(value: Any) -> Any:
@@ -25,12 +40,17 @@ def run_maybe_async(value: Any) -> Any:
 
 
 def load_assistant_env() -> None:
-    load_dotenv(Path(".env"))
+    load_dotenv(PROJECT_ROOT / ".env")
+    ensure_cognee_local_dirs()
     api_key = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
     if api_key:
         os.environ.setdefault("LLM_API_KEY", api_key)
         os.environ.setdefault("OPENAI_API_KEY", api_key)
     os.environ.setdefault("ENABLE_BACKEND_ACCESS_CONTROL", "false")
+    os.environ["SYSTEM_ROOT_DIRECTORY"] = str(COGNEE_SYSTEM_DIR)
+    os.environ["DATA_ROOT_DIRECTORY"] = str(COGNEE_DATA_DIR)
+    os.environ["CACHE_ROOT_DIRECTORY"] = str(COGNEE_CACHE_DIR)
+    os.environ["COGNEE_LOGS_DIR"] = str(COGNEE_SYSTEM_DIR / "logs")
 
 
 def key_status() -> tuple[bool, str]:
@@ -48,7 +68,7 @@ def cognee_status() -> tuple[bool, str]:
     return True, "Cognee is installed and importable."
 
 
-def load_demo_documents(data_dir: Path = Path("data")) -> list[str]:
+def load_demo_documents(data_dir: Path = PROJECT_ROOT / "data") -> list[str]:
     documents: list[str] = []
     for path in sorted(data_dir.glob("*.md")):
         text = path.read_text(encoding="utf-8").strip()

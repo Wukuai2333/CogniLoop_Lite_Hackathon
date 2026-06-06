@@ -15,6 +15,9 @@ env/
 .streamlit/secrets.toml
 .cogniloop_progress.json
 .cogniloop_docs_progress.json
+.cognee_system/
+.data_storage/
+.cognee_cache/
 *.log
 *.sqlite
 *.db
