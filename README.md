@@ -9,6 +9,7 @@ CogniLoop Lite is a local-first Streamlit MVP for Cognee onboarding. It helps ha
 - Cognee docs navigator with hackathon learning routes, notes, bookmarks, and Markdown export
 - Timeline checklist with local saved progress, optional notes, and Markdown export
 - Local `.env`-only AI Assistant test helper
+- Page-level Q&A history for asking about copied text from any page
 - Conversation-first workflow placeholder
 - Customize Your Own Cognee guide
 - BYOK-ready `.env.example`
@@ -47,6 +48,15 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```powershell
 streamlit run app.py
 ```
+
+## Template Workflow
+
+1. Replace or add Markdown files in `data`.
+2. Copy `.env.example` to `.env` and add your own key locally.
+3. Open AI Assistant and initialize `/data`.
+4. Ask test questions against local Cognee memory.
+5. Use page-level Ask Assistant panels to save Q&A history.
+6. Export notes and Q&A history for your README, pitch, or demo script.
 
 ## No-key Mode
 

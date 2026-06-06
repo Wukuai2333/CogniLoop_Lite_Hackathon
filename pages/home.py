@@ -5,27 +5,48 @@ from components.layout import page_header
 
 
 def render() -> None:
-    page_header("CogniLoop Lite", "A local-first Cognee onboarding companion for hackathon teams.")
+    page_header("CogniLoop Lite", "A local-first Cognee starter kit for hackathon onboarding and RAG demos.")
 
     metric_cards(
         [
-            ("Mode", "Local"),
-            ("API key", "BYOK"),
-            ("MVP scope", "Static"),
+            ("Project mode", "Local-first"),
+            ("AI access", ".env BYOK"),
+            ("Cognee flow", "add + cognify + recall"),
         ]
     )
 
     st.write(
-        "CogniLoop Lite helps participants understand Cognee, install it locally, follow a guided checklist, "
-        "and prepare a conversation-first workflow before asking an AI agent to work."
+        "CogniLoop Lite now works as both a beginner-friendly learning companion and a reusable template. "
+        "Participants can follow official Cognee docs, plan their hackathon workflow, initialize local documents "
+        "into Cognee memory, ask questions, and export their notes."
     )
 
-    col1, col2 = st.columns(2)
-    with col1:
-        step_card("Start with the tutorial", "Install Cognee, verify the environment, and learn where the API key belongs.")
-        step_card("Track progress", "Use the checklist to move from setup to final demo preparation.")
-    with col2:
-        step_card("Clarify before building", "Use the conversation-first placeholder to turn vague tasks into actionable prompts.")
-        step_card("Customize the template", "Replace sample documents, add a local `.env`, and prepare for future ingestion.")
+    st.subheader("Recommended Workflow")
+    steps = [
+        ("Learn", "Use Cognee Tutorial and Docs Navigator to understand setup, concepts, and official references."),
+        ("Plan", "Use Checklist and Conversation-first Workflow to define your target user, scope, blockers, and demo."),
+        ("Initialize", "Add Markdown files to `data`, then initialize them from AI Assistant with Cognee `add()` and `cognify()`."),
+        ("Ask", "Use AI Assistant or the page-level Ask panel to query local Cognee memory and save Q&A history."),
+        ("Export", "Download checklist notes, docs route notes, and Q&A history for your README or demo script."),
+        ("Customize", "Replace sample data, update prompts, and keep your API key in local `.env` only."),
+    ]
 
-    st.warning("No real Cognee API integration is enabled in this MVP. Static pages and checklist work without an API key.")
+    cols = st.columns(2)
+    for index, (title, body) in enumerate(steps):
+        with cols[index % 2]:
+            step_card(f"{index + 1}. {title}", body)
+
+    st.subheader("Use This As a Template")
+    st.markdown(
+        "1. Copy the project folder.\n"
+        "2. Put your own Markdown notes or sponsor docs in `data`.\n"
+        "3. Create local `.env` from `.env.example`.\n"
+        "4. Open AI Assistant and initialize `/data`.\n"
+        "5. Ask test questions and save useful Q&A.\n"
+        "6. Replace the sample business crisis dataset when your own materials are ready."
+    )
+
+    st.info(
+        "Static learning pages work without an API key. Cognee-powered assistant features are optional local tests "
+        "and can be skipped completely."
+    )

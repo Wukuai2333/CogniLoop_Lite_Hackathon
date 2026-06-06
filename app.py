@@ -1,4 +1,5 @@
 from components.layout import configure_page, render_sidebar
+from components.contextual_assistant import render_contextual_assistant
 from utils.env import load_local_env
 
 from pages import ai_assistant, checklist, conversation_first, customize, docs_navigator, home, tutorial
@@ -20,6 +21,7 @@ def main() -> None:
     load_local_env()
     page_key = render_sidebar()
     ROUTES[page_key]()
+    render_contextual_assistant(page_key)
 
 
 if __name__ == "__main__":
