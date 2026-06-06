@@ -12,6 +12,51 @@ from utils.assistant_runtime import (
 from utils.qa_history import add_qa_entry, history_markdown, load_qa_history
 
 
+def context_keys(page_key: str) -> tuple[str, str]:
+    return f"context_text::{page_key}", f"context_question::{page_key}"
+
+
+def capture_selection_request(page_key: str) -> str:
+    context_key, question_key = context_keys(page_key)
+    if st.query_params.get("ask_page") != page_key:
+        return st.session_state.get(f"selection_notice::{page_key}", "")
+
+    selected_text = st.query_params.get("ask_selection", "").strip()
+    ask_ts = st.query_params.get("ask_ts", "")
+    capture_ts_key = f"selection_capture_ts::{page_key}"
+    if not selected_text:
+        return st.session_state.get(f"selection_notice::{page_key}", "")
+
+    if st.session_state.get(capture_ts_key) != ask_ts:
+        st.session_state[context_key] = selected_text
+        st.session_state.setdefault(
+            question_key,
+            "What does this selected text mean, and what should I do next?",
+        )
+        st.session_state[capture_ts_key] = ask_ts
+        st.session_state[f"selection_notice::{page_key}"] = selected_text
+        st.session_state[f"selection_expanded::{page_key}"] = True
+
+    return st.session_state.get(f"selection_notice::{page_key}", "")
+
+
+def render_selection_capture_banner(page_key: str) -> None:
+    selected_text = st.session_state.get(f"selection_notice::{page_key}", "")
+    if not selected_text:
+        return
+
+    with st.container(border=True):
+        st.success("Selected text captured. Review or edit it in Ask Assistant below.")
+        preview = selected_text if len(selected_text) <= 260 else f"{selected_text[:260]}..."
+        st.caption(preview)
+        if st.button("Clear selected text", key=f"clear_selection_notice::{page_key}"):
+            context_key, _ = context_keys(page_key)
+            st.session_state.pop(context_key, None)
+            st.session_state.pop(f"selection_notice::{page_key}", None)
+            st.session_state[f"selection_expanded::{page_key}"] = False
+            st.rerun()
+
+
 def inject_selection_assistant(page_key: str) -> None:
     page_key_json = json.dumps(page_key)
     components.html(
@@ -186,22 +231,13 @@ def inject_selection_assistant(page_key: str) -> None:
 
 def render_contextual_assistant(page_key: str) -> None:
     inject_selection_assistant(page_key)
-    context_key = f"context_text::{page_key}"
-    question_key = f"context_question::{page_key}"
-    selected_from_query = ""
-    if st.query_params.get("ask_page") == page_key:
-        selected_from_query = st.query_params.get("ask_selection", "").strip()
-        if selected_from_query:
-            st.session_state[context_key] = selected_from_query
-            st.session_state.setdefault(
-                question_key,
-                "What does this selected text mean, and what should I do next?",
-            )
-            st.toast("Selected text added to Ask Assistant.")
+    context_key, question_key = context_keys(page_key)
+    selected_from_query = capture_selection_request(page_key)
+    expanded = bool(st.session_state.get(f"selection_expanded::{page_key}") or selected_from_query)
 
     st.divider()
     st.markdown("<span id='cogniloop-contextual-assistant'></span>", unsafe_allow_html=True)
-    with st.expander("Ask Assistant About This Page", expanded=bool(selected_from_query)):
+    with st.expander("Ask Assistant About This Page", expanded=expanded):
         st.caption(
             "Highlight text anywhere on the page, choose Ask Assistant, then confirm your question here. "
             "The Q&A will be saved locally."
