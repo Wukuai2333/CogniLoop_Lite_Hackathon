@@ -21,6 +21,21 @@ def render() -> None:
         "into Cognee memory, ask questions, and export their notes."
     )
 
+    st.subheader("Publish Mode")
+    publish_cols = st.columns(2)
+    with publish_cols[0]:
+        step_card(
+            "Hosted guide",
+            "Deploy the app publicly with `.env.example` only. Visitors can use the tutorial, docs navigator, checklist, "
+            "and template instructions without seeing or entering any API key.",
+        )
+    with publish_cols[1]:
+        step_card(
+            "Local full template",
+            "Participants clone the repo, copy `.env.example` to `.env`, add their own key locally, then initialize `data` "
+            "and test Cognee-powered assistant flows on their machine.",
+        )
+
     st.subheader("Recommended Workflow")
     steps = [
         ("Learn", "Use Cognee Tutorial and Docs Navigator to understand setup, concepts, and official references."),

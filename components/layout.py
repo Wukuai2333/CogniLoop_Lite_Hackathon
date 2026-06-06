@@ -12,6 +12,58 @@ PAGES = {
 }
 
 
+def render_sidebar_styles() -> None:
+    st.sidebar.markdown(
+        """
+        <style>
+        section[data-testid="stSidebar"] {
+            border-right: 1px solid rgba(139, 148, 158, 0.18);
+        }
+        section[data-testid="stSidebar"] h1 {
+            font-size: 1.85rem;
+            letter-spacing: 0;
+            margin-bottom: 0.35rem;
+        }
+        section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
+            color: #a5a8b0;
+        }
+        section[data-testid="stSidebar"] div[role="radiogroup"] {
+            gap: 0.2rem;
+        }
+        section[data-testid="stSidebar"] div[role="radiogroup"] label {
+            border: 1px solid transparent;
+            border-radius: 8px;
+            padding: 0.58rem 0.7rem;
+            margin: 0.08rem 0;
+            transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+        }
+        section[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
+            background: rgba(46, 160, 67, 0.08);
+            border-color: rgba(46, 160, 67, 0.22);
+        }
+        section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
+            background: rgba(46, 160, 67, 0.15);
+            border-color: rgba(46, 160, 67, 0.44);
+            box-shadow: inset 3px 0 0 #2ea043;
+        }
+        section[data-testid="stSidebar"] div[role="radiogroup"] label > div:first-child {
+            display: none;
+        }
+        section[data-testid="stSidebar"] div[role="radiogroup"] label p {
+            font-weight: 650;
+            font-size: 0.98rem;
+            line-height: 1.25;
+        }
+        section[data-testid="stSidebar"] code {
+            color: #56d364;
+            background: rgba(46, 160, 67, 0.12);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def configure_page() -> None:
     st.set_page_config(
         page_title="CogniLoop Lite",
@@ -22,11 +74,14 @@ def configure_page() -> None:
 
 
 def render_sidebar() -> str:
+    render_sidebar_styles()
     st.sidebar.title("CogniLoop Lite")
-    st.sidebar.caption("Local-first Cognee onboarding")
+    st.sidebar.caption("Hosted guide. Local-first template.")
     choice = st.sidebar.radio("Navigate", list(PAGES.keys()), label_visibility="collapsed")
     st.sidebar.divider()
-    st.sidebar.caption("Static pages work without an API key. Future assistant features use your local `.env`.")
+    st.sidebar.caption(
+        "Public demos ship with `.env.example` only. Clone locally and create `.env` to enable Cognee assistant tests."
+    )
     return PAGES[choice]
 
 

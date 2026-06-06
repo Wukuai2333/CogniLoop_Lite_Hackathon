@@ -49,6 +49,21 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 streamlit run app.py
 ```
 
+## Publish as a Public Demo
+
+For a hosted Streamlit demo, commit `.env.example` but never commit `.env`.
+The public app can show the tutorial, docs navigator, checklist, template workflow, and setup instructions without any API key.
+
+Recommended hosted mode:
+
+1. Push this folder to GitHub.
+2. Deploy `app.py` on Streamlit Community Cloud.
+3. Do not add your personal API key to the public repo.
+4. Keep AI Assistant positioned as a local template feature.
+5. Tell participants to clone the repo and create their own `.env` for full Cognee assistant testing.
+
+This keeps the hosted app useful as a guide while avoiding shared API-key costs or responsibility.
+
 ## Template Workflow
 
 1. Replace or add Markdown files in `data`.
