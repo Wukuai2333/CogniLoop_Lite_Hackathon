@@ -6,7 +6,7 @@ from utils.persistence import load_progress, save_progress
 
 
 def render() -> None:
-    page_header("Timeline Checklist", "A reading-style progress guide with optional checks and notes.")
+    page_header("Timeline Checklist", "A reading-style progress guide with checks and notes.")
 
     if "saved_progress" not in st.session_state:
         st.session_state.saved_progress = load_progress()

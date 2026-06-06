@@ -105,7 +105,7 @@ def render_reader(progress: dict) -> None:
 
     completed, total = total_counts(progress)
     st.progress(completed / total if total else 0)
-    st.caption(f"Overall progress: {completed} / {total} optional checks completed")
+    st.caption(f"Overall progress: {completed} / {total} checks completed")
 
     left, right = st.columns([0.72, 0.28])
     with left:
