@@ -1,5 +1,6 @@
 import streamlit as st
 
+from components.export_glow import render_download_button_glow
 from content.checklist_content import CHECKLIST_STAGES
 from utils.export import full_markdown, stage_markdown
 from utils.persistence import save_progress, step_key
@@ -284,6 +285,7 @@ def render_reader(progress: dict) -> None:
         st.markdown("<span id='checklist-export-section'></span>", unsafe_allow_html=True)
         render_export_hint()
         st.caption("Click either download button to share the current stage or full progress with your agent.")
+        render_download_button_glow(["Download Stage Markdown", "Download Full Progress"])
         st.download_button(
             "Download Stage Markdown",
             data=stage_markdown(stage_index, progress),

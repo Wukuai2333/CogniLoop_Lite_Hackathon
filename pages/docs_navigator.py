@@ -1,6 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
+from components.export_glow import render_download_button_glow
 from components.layout import page_header
 from content.docs_catalog import OFFICIAL_COLAB_SETUP, OFFICIAL_DOC_SECTIONS
 from content.docs_routes import DOC_ROUTES
@@ -346,6 +347,7 @@ def render_step(route: dict, progress: dict) -> None:
         st.markdown("<span id='docs-export-section'></span>", unsafe_allow_html=True)
         render_agent_alignment_hint(show_focus_button=False)
         st.caption("Use these two download buttons to package your current route notes or all route notes for your agent.")
+        render_download_button_glow(["Download This Route", "Download All Routes"])
         st.download_button(
             "Download This Route",
             data=route_markdown(route, progress),
