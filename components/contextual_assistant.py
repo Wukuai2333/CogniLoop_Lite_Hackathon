@@ -24,66 +24,66 @@ def inject_selection_assistant(page_key: str) -> None:
             const barId = "cogniloop-selection-ask-bar";
             const styleId = "cogniloop-selection-ask-style";
             let lastSelectedText = "";
+            let selectionTimer = null;
 
-            if (!parentDoc.getElementById(styleId)) {{
-                const style = parentDoc.createElement("style");
+            let style = parentDoc.getElementById(styleId);
+            if (!style) {{
+                style = parentDoc.createElement("style");
                 style.id = styleId;
-                style.textContent = `
-                    #${{barId}} {{
-                        position: fixed;
-                        z-index: 2147483647;
-                        display: none;
-                        max-width: min(420px, calc(100vw - 2rem));
-                        grid-template-columns: minmax(0, 1fr) auto;
-                        align-items: center;
-                        gap: 0.7rem;
-                        padding: 0.72rem;
-                        border: 1px solid rgba(63, 185, 80, 0.72);
-                        border-radius: 10px;
-                        background: rgba(13, 17, 23, 0.96);
-                        color: #ffffff;
-                        font: 600 13px/1.35 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.34);
-                        backdrop-filter: blur(8px);
-                    }}
-                    #${{barId}} .cogniloop-selection-preview {{
-                        color: #c9d1d9;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                    }}
-                    #${{barId}} .cogniloop-selection-preview span {{
-                        color: #8b949e;
-                        display: block;
-                        font-size: 11px;
-                        font-weight: 500;
-                    }}
-                    #${{barId}} button {{
-                        border: 1px solid rgba(63, 185, 80, 0.72);
-                        border-radius: 8px;
-                        background: #238636;
-                        color: #ffffff;
-                        padding: 0.55rem 0.7rem;
-                        font-weight: 800;
-                        cursor: pointer;
-                    }}
-                    #${{barId}} button:hover {{
-                        background: #2ea043;
-                    }}
-                `;
                 parentDoc.head.appendChild(style);
             }}
+            style.textContent = `
+                #${{barId}} {{
+                    position: fixed;
+                    z-index: 2147483647;
+                    display: none;
+                    align-items: center;
+                    gap: 0.45rem;
+                    width: max-content;
+                    max-width: min(320px, calc(100vw - 2rem));
+                    padding: 0.42rem 0.48rem;
+                    border: 1px solid rgba(63, 185, 80, 0.72);
+                    border-radius: 999px;
+                    background: rgba(13, 17, 23, 0.96);
+                    color: #ffffff;
+                    font: 700 12px/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.34);
+                    backdrop-filter: blur(8px);
+                }}
+                #${{barId}} .cogniloop-selection-preview {{
+                    max-width: 145px;
+                    color: #c9d1d9;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    font-weight: 600;
+                }}
+                #${{barId}} a {{
+                    display: inline-flex;
+                    align-items: center;
+                    border: 1px solid rgba(63, 185, 80, 0.72);
+                    border-radius: 999px;
+                    background: #238636;
+                    color: #ffffff;
+                    padding: 0.42rem 0.58rem;
+                    font-weight: 800;
+                    text-decoration: none;
+                    cursor: pointer;
+                    white-space: nowrap;
+                }}
+                #${{barId}} a:hover {{
+                    background: #2ea043;
+                    color: #ffffff;
+                }}
+            `;
 
             let bar = parentDoc.getElementById(barId);
             if (!bar) {{
                 bar = parentDoc.createElement("div");
                 bar.id = barId;
                 bar.innerHTML = `
-                    <div class="cogniloop-selection-preview">
-                        <span>Selected text</span>
-                        <div data-role="preview"></div>
-                    </div>
-                    <button type="button" data-role="ask">Ask Assistant</button>
+                    <div class="cogniloop-selection-preview" data-role="preview"></div>
+                    <a href="#" data-role="ask">Ask Assistant</a>
                 `;
                 parentDoc.body.appendChild(bar);
             }}
@@ -107,7 +107,7 @@ def inject_selection_assistant(page_key: str) -> None:
 
                 lastSelectedText = text;
                 const preview = bar.querySelector('[data-role="preview"]');
-                preview.textContent = text.length > 120 ? text.slice(0, 120) + "..." : text;
+                preview.textContent = text.length > 36 ? text.slice(0, 36) + "..." : text;
 
                 const selection = parentWindow.getSelection() || parentDoc.getSelection();
                 let left = parentWindow.innerWidth - 440;
@@ -123,25 +123,22 @@ def inject_selection_assistant(page_key: str) -> None:
                     }}
                 }}
 
-                left = Math.min(Math.max(left, 12), parentWindow.innerWidth - 432);
-                top = Math.min(Math.max(top, 12), parentWindow.innerHeight - 104);
+                const targetUrl = new URL(parentWindow.location.href);
+                targetUrl.searchParams.set("ask_page", pageKey);
+                targetUrl.searchParams.set("ask_selection", text.slice(0, 1600));
+                targetUrl.searchParams.set("ask_ts", Date.now().toString());
+                targetUrl.hash = "cogniloop-contextual-assistant";
+                bar.querySelector('[data-role="ask"]').setAttribute("href", targetUrl.toString());
+
+                left = Math.min(Math.max(left, 12), parentWindow.innerWidth - 324);
+                top = Math.min(Math.max(top, 12), parentWindow.innerHeight - 64);
                 bar.style.left = `${{left}}px`;
                 bar.style.top = `${{top}}px`;
-                bar.style.display = "grid";
+                bar.style.display = "inline-flex";
             }}
 
             bar.querySelector('[data-role="ask"]').onclick = function (event) {{
-                event.preventDefault();
                 event.stopPropagation();
-                const text = selectedText() || lastSelectedText;
-                if (!text) return;
-
-                const url = new URL(parentWindow.location.href);
-                url.searchParams.set("ask_page", pageKey);
-                url.searchParams.set("ask_selection", text.slice(0, 1600));
-                url.searchParams.set("ask_ts", Date.now().toString());
-                url.hash = "cogniloop-contextual-assistant";
-                parentWindow.location.href = url.toString();
             }};
 
             if (parentWindow.__cogniloopSelectionHandler) {{
@@ -154,7 +151,11 @@ def inject_selection_assistant(page_key: str) -> None:
             }}
 
             parentWindow.__cogniloopSelectionHandler = function () {{
-                setTimeout(updateBar, 80);
+                if (selectionTimer) {{
+                    parentWindow.clearTimeout(selectionTimer);
+                }}
+                hideBar();
+                selectionTimer = parentWindow.setTimeout(updateBar, 500);
             }};
             parentWindow.__cogniloopSelectionScrollHandler = updateBar;
 

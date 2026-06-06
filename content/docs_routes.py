@@ -184,7 +184,7 @@ DOC_ROUTES = [
                         "code": DATA_FOLDER_COMMAND,
                     },
                     {
-                        "title": "Use the CogniLoop template flow",
+                        "title": "Use the CogniLoop local flow",
                         "language": "bash",
                         "code": COGNILOOP_TEMPLATE_COMMAND,
                     },

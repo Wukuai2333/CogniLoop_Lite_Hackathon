@@ -76,7 +76,7 @@ def configure_page() -> None:
 def render_sidebar() -> str:
     render_sidebar_styles()
     st.sidebar.title("CogniLoop Lite")
-    st.sidebar.caption("Hosted guide. Local-first template.")
+    st.sidebar.caption("Hosted guide. Local-first demo.")
     choice = st.sidebar.radio("Navigate", list(PAGES.keys()), label_visibility="collapsed")
     st.sidebar.divider()
     st.sidebar.caption(

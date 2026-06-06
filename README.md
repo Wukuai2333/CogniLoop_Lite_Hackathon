@@ -1,6 +1,6 @@
 # CogniLoop Lite
 
-CogniLoop Lite is a local-first Streamlit MVP for Cognee onboarding. It helps hackathon participants install Cognee, follow a guided checklist, clarify their task before working with an agent, and learn how to customize the template with their own documents.
+CogniLoop Lite is a local-first Streamlit MVP for Cognee onboarding. It helps hackathon participants install Cognee, follow a guided checklist, clarify their task before working with an agent, and test a small local Cognee memory demo with their own documents.
 
 ## MVP Scope
 
@@ -17,7 +17,7 @@ CogniLoop Lite is a local-first Streamlit MVP for Cognee onboarding. It helps ha
 The static pages do not call Cognee APIs and do not require an API key.
 The AI Assistant page stays disabled until a key is present in local `.env` or existing environment variables.
 
-The assistant demo ingests local Markdown files from `/data`, including Cognee onboarding notes and a small business crisis mini dataset. Replace these files with your own project materials to turn the app into a project-specific Cognee template.
+The assistant demo ingests local Markdown files from `/data`, including Cognee onboarding notes and a small business crisis mini dataset. Replace these files with your own project materials when you want to test a project-specific Cognee memory flow.
 
 The `cognee_*.md` files are short local summaries/placeholders written for this MVP. They are not copies of the official Cognee documentation. Use the Docs Navigator and the official links for authoritative details.
 
@@ -52,19 +52,19 @@ streamlit run app.py
 ## Publish as a Public Demo
 
 For a hosted Streamlit demo, commit `.env.example` but never commit `.env`.
-The public app can show the tutorial, docs navigator, checklist, template workflow, and setup instructions without any API key.
+The public app can show the tutorial, docs navigator, checklist, learning workflow, and setup instructions without any API key.
 
 Recommended hosted mode:
 
 1. Push this folder to GitHub.
 2. Deploy `app.py` on Streamlit Community Cloud.
 3. Do not add your personal API key to the public repo.
-4. Keep AI Assistant positioned as a local template feature.
+4. Keep AI Assistant positioned as an optional local demo feature.
 5. Tell participants to clone the repo and create their own `.env` for full Cognee assistant testing.
 
 This keeps the hosted app useful as a guide while avoiding shared API-key costs or responsibility.
 
-## Template Workflow
+## Local Demo Workflow
 
 1. Replace or add Markdown files in `data`.
 2. Copy `.env.example` to `.env` and add your own key locally.

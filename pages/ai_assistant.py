@@ -205,7 +205,7 @@ def render() -> None:
         else:
             st.warning("No Markdown documents found in `/data`.")
     st.caption(
-        "Template note: Cognee's local demo storage is kept in project folders: `.cognee_system`, "
+        "Local storage note: Cognee's local demo storage is kept in project folders: `.cognee_system`, "
         "`.data_storage`, and `.cognee_cache`. This makes the demo easy to inspect or reset."
     )
     if st.button("Initialize /data documents", disabled=disabled, type="primary", use_container_width=False):

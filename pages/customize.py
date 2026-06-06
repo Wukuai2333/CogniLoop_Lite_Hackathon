@@ -4,7 +4,7 @@ from components.layout import page_header
 
 
 def render() -> None:
-    page_header("Customize Your Own Cognee", "Adapt the template with your own documents and local API key.")
+    page_header("Customize Your Own Cognee", "Adapt the local demo with your own documents and local API key.")
 
     st.header("Recommended Flow")
     st.markdown(

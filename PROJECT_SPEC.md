@@ -46,7 +46,7 @@ Primary users:
 Secondary users:
 
 * Mentors or organizers who want to guide participants through onboarding.
-* Developers who want a reusable Cognee project template.
+* Developers who want a small reference demo for Cognee onboarding.
 
 ---
 
@@ -58,7 +58,7 @@ CogniLoop Lite includes five modules:
 2. Timeline / Checklist Guide
 3. Conversation-first Workflow
 4. BYOK Cognee-powered Assistant
-5. Customize Your Own Cognee Template
+5. Customize Your Own Cognee Demo
 
 For the first build, prioritize Modules 1 and 2.
 
