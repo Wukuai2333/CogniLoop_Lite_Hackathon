@@ -6,6 +6,7 @@ PAGES = {
     "Cognee Tutorial": "tutorial",
     "Docs Navigator": "docs_navigator",
     "Checklist": "checklist",
+    "AI Assistant": "ai_assistant",
     "Conversation-first Workflow": "conversation_first",
     "Customize Your Own Cognee": "customize",
 }

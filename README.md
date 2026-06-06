@@ -8,11 +8,13 @@ CogniLoop Lite is a local-first Streamlit MVP for Cognee onboarding. It helps ha
 - Static Cognee tutorial
 - Cognee docs navigator with hackathon learning routes, notes, bookmarks, and Markdown export
 - Timeline checklist with local saved progress, optional notes, and Markdown export
+- Local `.env`-only AI Assistant test helper
 - Conversation-first workflow placeholder
 - Customize Your Own Cognee guide
 - BYOK-ready `.env.example`
 
-The static MVP does not call Cognee APIs and does not require an API key.
+The static pages do not call Cognee APIs and do not require an API key.
+The AI Assistant page stays disabled until a key is present in local `.env` or existing environment variables.
 
 ## Setup
 
@@ -48,13 +50,24 @@ The tutorial, checklist, conversation-first placeholder, and customization guide
 
 ## BYOK Mode
 
-Future assistant features will require your own local API key. Copy `.env.example` to `.env` and set:
+Assistant test features require a local API key through `.env`.
+CogniLoop Lite should not collect API keys through the web UI.
+
+Copy `.env.example` to `.env` and set:
 
 ```env
 LLM_API_KEY=your_api_key_here
+OPENAI_API_KEY=your_api_key_here
 ```
 
 Never commit `.env` or share your API key.
+
+## API Key Safety Boundary
+
+- The app should not ask users to paste API keys into a Streamlit page.
+- No browser-session password input should be used for API keys.
+- Assistant features should be local-first, BYOK, and `.env` only.
+- Assistant features should be described as a lightweight test helper that users can skip completely.
 
 ## Troubleshooting
 
