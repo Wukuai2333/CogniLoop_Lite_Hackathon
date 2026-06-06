@@ -24,6 +24,46 @@ def render_optional_notice() -> None:
     )
 
 
+def render_connection_status(message: str) -> None:
+    st.markdown(
+        f"""
+        <style>
+        .assistant-connection {{
+            border: 1px solid rgba(139, 148, 158, 0.32);
+            border-radius: 6px;
+            padding: 0.75rem 0.9rem;
+            margin: 0.5rem 0 1rem 0;
+            background: rgba(139, 148, 158, 0.08);
+            color: #c9d1d9;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }}
+        .assistant-connection-dots span {{
+            display: inline-block;
+            animation: assistantDotBounce 1s infinite ease-in-out;
+            font-weight: 700;
+        }}
+        .assistant-connection-dots span:nth-child(2) {{
+            animation-delay: 0.14s;
+        }}
+        .assistant-connection-dots span:nth-child(3) {{
+            animation-delay: 0.28s;
+        }}
+        @keyframes assistantDotBounce {{
+            0%, 80%, 100% {{ transform: translateY(0); opacity: 0.45; }}
+            40% {{ transform: translateY(-0.28rem); opacity: 1; }}
+        }}
+        </style>
+        <div class="assistant-connection">
+            <div>{message}</div>
+            <div class="assistant-connection-dots"><span>.</span><span>.</span><span>.</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render() -> None:
     page_header("AI Assistant", "Local `.env`-only Cognee test helper for the demo dataset.")
     render_optional_notice()
@@ -55,7 +95,7 @@ def render() -> None:
     documents = load_demo_documents()
 
     st.subheader("1. Remember local demo documents")
-    st.write("This loads Markdown files from `/data` into a small project-local Cognee demo dataset.")
+    st.write("This loads Markdown files from the `data` folder into a small project-local Cognee demo dataset.")
     with st.expander(f"Dataset preview ({len(documents)} Markdown files)", expanded=False):
         if documents:
             st.write("The current sample dataset includes local Cognee summaries plus a small business crisis mini dataset.")
@@ -64,11 +104,12 @@ def render() -> None:
         else:
             st.warning("No Markdown documents found in `/data`.")
     st.caption(
-        "Template note: this project stores Cognee data in local project folders (`.cognee_system`, "
-        "`.data_storage`, `.cognee_cache`) so participants can inspect or reset the demo easily."
+        "Template note: Cognee's local demo storage is kept in project folders: `.cognee_system`, "
+        "`.data_storage`, and `.cognee_cache`. This makes the demo easy to inspect or reset."
     )
     if st.button("Remember /data documents", disabled=disabled):
-        with st.spinner("Asking Cognee to remember local documents..."):
+        render_connection_status("Connecting the local Cognee runtime to your project data and provider API via `.env`")
+        with st.spinner("Building local Cognee memory from data files..."):
             try:
                 st.success(remember_demo_documents())
             except Exception as exc:
@@ -77,7 +118,8 @@ def render() -> None:
     with st.expander("Troubleshooting local Cognee storage", expanded=False):
         st.write(
             "If you see a database lock error, reset the project-local Cognee store. "
-            "This deletes the local demo memory only; it does not touch `.env` or your source files."
+            "This deletes the local demo memory only; it does not touch `.env` or your source files. "
+            "If the lock persists after reset, restart Streamlit so Windows releases the local graph database file."
         )
         if st.button("Reset local Cognee storage"):
             try:
@@ -92,7 +134,8 @@ def render() -> None:
         height=100,
     )
     if st.button("Ask", disabled=disabled or not question.strip()):
-        with st.spinner("Calling Cognee recall..."):
+        render_connection_status("Querying local Cognee memory, then calling the configured provider through `.env`")
+        with st.spinner("Retrieving an answer from the local demo dataset..."):
             try:
                 results = recall_answer(question.strip())
                 st.markdown("### Result")

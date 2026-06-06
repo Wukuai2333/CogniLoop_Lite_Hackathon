@@ -104,7 +104,7 @@ def user_friendly_error(exc: Exception) -> str:
         return (
             "Cognee could not lock the local graph database. This usually means a previous run still has the "
             "local store open or the local store needs a reset. Try the reset button below, then remember the "
-            "documents again."
+            "documents again. If it still happens, restart the Streamlit app so Windows releases the database lock."
         )
     return message
 
