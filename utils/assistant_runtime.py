@@ -1,8 +1,11 @@
 from pathlib import Path
 import asyncio
 import inspect
+import json
 import os
 import shutil
+import subprocess
+import sys
 from typing import Any
 
 from dotenv import load_dotenv
@@ -77,10 +80,10 @@ def key_status() -> tuple[bool, str]:
 
 
 def cognee_status() -> tuple[bool, str]:
-    try:
-        import cognee  # noqa: F401
-    except Exception as exc:
-        return False, f"Cognee import failed: {exc}"
+    import importlib.util
+
+    if importlib.util.find_spec("cognee") is None:
+        return False, "Cognee is not installed in this environment."
     return True, "Cognee is installed and importable."
 
 
@@ -138,21 +141,46 @@ def user_friendly_error(exc: Exception) -> str:
     return message
 
 
+def run_worker(command: str, payload: dict[str, Any] | None = None, timeout: int = 180) -> dict[str, Any]:
+    load_assistant_env()
+    completed = subprocess.run(
+        [sys.executable, "-m", "utils.cognee_worker", command],
+        cwd=PROJECT_ROOT,
+        input=json.dumps(payload or {}),
+        text=True,
+        capture_output=True,
+        timeout=timeout,
+        env=os.environ.copy(),
+    )
+
+    output = completed.stdout.strip().splitlines()[-1] if completed.stdout.strip() else "{}"
+    try:
+        result = json.loads(output)
+    except json.JSONDecodeError:
+        result = {"ok": False, "error": completed.stderr.strip() or completed.stdout.strip()}
+
+    if completed.returncode != 0 and result.get("ok", True):
+        result = {"ok": False, "error": completed.stderr.strip() or "Cognee worker failed."}
+    return result
+
+
 def remember_demo_documents() -> str:
     load_assistant_env()
     documents = load_demo_documents()
     if not documents:
         return "No Markdown documents found in /data."
 
-    run_maybe_async(initialize_cognee_dataset(documents))
-    return f"Initialized {len(documents)} local Markdown document(s) in dataset `{DEMO_DATASET}`."
+    result = run_worker("init", timeout=240)
+    if not result.get("ok"):
+        raise RuntimeError(result.get("error", "Cognee initialization failed."))
+    return result.get("message", f"Initialized dataset `{DEMO_DATASET}`.")
 
 
 def recall_answer(question: str) -> list[Any]:
-    load_assistant_env()
-    import cognee
-
-    return run_maybe_async(cognee.recall(question, datasets=[DEMO_DATASET], top_k=5))
+    result = run_worker("ask", {"question": question}, timeout=120)
+    if not result.get("ok"):
+        raise RuntimeError(result.get("error", "Cognee recall failed."))
+    return result.get("results", [])
 
 
 def format_recall_results(results: list[Any]) -> str:
