@@ -22,6 +22,7 @@ def capture_selection_request(page_key: str) -> str:
         return st.session_state.get(f"selection_notice::{page_key}", "")
 
     selected_text = st.query_params.get("ask_selection", "").strip()
+    selected_question = st.query_params.get("ask_question", "").strip()
     ask_ts = st.query_params.get("ask_ts", "")
     capture_ts_key = f"selection_capture_ts::{page_key}"
     if not selected_text:
@@ -29,12 +30,10 @@ def capture_selection_request(page_key: str) -> str:
 
     if st.session_state.get(capture_ts_key) != ask_ts:
         st.session_state[context_key] = selected_text
-        st.session_state.setdefault(
-            question_key,
-            "What does this selected text mean, and what should I do next?",
-        )
+        st.session_state[question_key] = selected_question or "What does this selected text mean, and what should I do next?"
         st.session_state[capture_ts_key] = ask_ts
         st.session_state[f"selection_notice::{page_key}"] = selected_text
+        st.session_state[f"selection_question::{page_key}"] = st.session_state[question_key]
         st.session_state[f"selection_expanded::{page_key}"] = True
 
     return st.session_state.get(f"selection_notice::{page_key}", "")
@@ -46,20 +45,42 @@ def render_selection_capture_banner(page_key: str) -> None:
         return
 
     with st.container(border=True):
-        st.success("Selected text captured. Review or edit it in Ask Assistant below.")
+        st.success("Selected text captured.")
         preview = selected_text if len(selected_text) <= 260 else f"{selected_text[:260]}..."
         st.caption(preview)
-        key_ok, _ = key_status()
+        question = st.session_state.get(f"selection_question::{page_key}", "").strip()
+        if question:
+            st.markdown(f"**Question:** {question}")
+
+        key_ok, key_message = key_status()
         if not key_ok:
             st.caption(
-                "API key not added yet. The assistant is an optional local experiment; the learning pages and exports "
-                "still work without it."
+                "API key not added yet. The assistant is an optional local experiment; tutorial pages and exports still work."
             )
             st.link_button("How to add a local API key", "?page=ai_assistant")
+        elif question:
+            answer_key = f"selection_answer::{page_key}::{st.session_state.get(f'selection_capture_ts::{page_key}', '')}"
+            if answer_key not in st.session_state:
+                query = f"Context from page:\n{selected_text}\n\nQuestion:\n{question}"
+                with st.status("Asking local Cognee assistant...", expanded=True) as status:
+                    try:
+                        results = recall_answer(query)
+                        answer = format_recall_results(results)
+                        add_qa_entry(page_key, question, selected_text, answer)
+                        st.session_state[answer_key] = answer
+                        status.update(label="Answer saved to Q&A history.", state="complete")
+                    except Exception as exc:
+                        answer = user_friendly_error(exc)
+                        add_qa_entry(page_key, question, selected_text, answer, status="error")
+                        st.session_state[answer_key] = answer
+                        status.update(label="Assistant query failed.", state="error")
+            st.markdown("**Answer**")
+            st.write(st.session_state[answer_key])
         if st.button("Clear selected text", key=f"clear_selection_notice::{page_key}"):
             context_key, _ = context_keys(page_key)
             st.session_state.pop(context_key, None)
             st.session_state.pop(f"selection_notice::{page_key}", None)
+            st.session_state.pop(f"selection_question::{page_key}", None)
             st.session_state[f"selection_expanded::{page_key}"] = False
             st.rerun()
 
@@ -144,6 +165,19 @@ def inject_selection_assistant(page_key: str) -> None:
                     text-overflow: ellipsis;
                     white-space: nowrap;
                 }}
+                #${{barId}} input {{
+                    width: 220px;
+                    min-height: 2.15rem;
+                    border: 1px solid rgba(139, 148, 158, 0.45);
+                    border-radius: 8px;
+                    background: rgba(33, 38, 45, 0.96);
+                    color: #ffffff;
+                    padding: 0 0.58rem;
+                    outline: none;
+                }}
+                #${{barId}} input:focus {{
+                    border-color: #2ea043;
+                }}
                 #${{barId}} a {{
                     display: inline-flex;
                     align-items: center;
@@ -169,7 +203,8 @@ def inject_selection_assistant(page_key: str) -> None:
                 bar.id = barId;
                 bar.innerHTML = `
                     <div class="cogniloop-selection-preview"><span>Selected text</span><strong data-role="preview"></strong></div>
-                    <a href="#" data-role="ask" style="display:inline-flex;align-items:center;border:1px solid #2ea043;border-radius:8px;background:#238636;color:#ffffff;padding:0.5rem 0.68rem;font-weight:800;text-decoration:none;cursor:pointer;white-space:nowrap;">Ask Assistant</a>
+                    <input data-role="question" placeholder="Ask about this..." />
+                    <a href="#" data-role="ask" style="display:inline-flex;align-items:center;border:1px solid #2ea043;border-radius:8px;background:#238636;color:#ffffff;padding:0.5rem 0.68rem;font-weight:800;text-decoration:none;cursor:pointer;white-space:nowrap;">Ask</a>
                 `;
                 parentDoc.body.appendChild(bar);
             }}
@@ -184,10 +219,11 @@ def inject_selection_assistant(page_key: str) -> None:
                 bar.style.display = "none";
             }}
 
-            function buildTargetUrl(text) {{
+            function buildTargetUrl(text, question) {{
                 const targetUrl = new URL(parentWindow.location.href);
                 targetUrl.searchParams.set("ask_page", pageKey);
                 targetUrl.searchParams.set("ask_selection", text.slice(0, 1600));
+                targetUrl.searchParams.set("ask_question", question.slice(0, 500));
                 targetUrl.searchParams.set("ask_ts", Date.now().toString());
                 targetUrl.hash = "cogniloop-contextual-assistant";
                 return targetUrl.toString();
@@ -218,7 +254,9 @@ def inject_selection_assistant(page_key: str) -> None:
                     }}
                 }}
 
-                bar.querySelector('[data-role="ask"]').setAttribute("href", buildTargetUrl(text));
+                const questionInput = bar.querySelector('[data-role="question"]');
+                const question = questionInput.value || "What does this selected text mean?";
+                bar.querySelector('[data-role="ask"]').setAttribute("href", buildTargetUrl(text, question));
 
                 left = Math.min(Math.max(left, 12), parentWindow.innerWidth - 364);
                 top = Math.min(Math.max(top, 12), parentWindow.innerHeight - 72);
@@ -234,7 +272,9 @@ def inject_selection_assistant(page_key: str) -> None:
                 if (!text) {{
                     return false;
                 }}
-                parentWindow.location.assign(buildTargetUrl(text));
+                const questionInput = bar.querySelector('[data-role="question"]');
+                const question = questionInput.value || "What does this selected text mean?";
+                parentWindow.location.assign(buildTargetUrl(text, question));
                 return false;
             }};
 
@@ -270,67 +310,33 @@ def inject_selection_assistant(page_key: str) -> None:
 
 def render_contextual_assistant(page_key: str) -> None:
     inject_selection_assistant(page_key)
-    context_key, question_key = context_keys(page_key)
-    selected_from_query = capture_selection_request(page_key)
-    expanded = bool(st.session_state.get(f"selection_expanded::{page_key}") or selected_from_query)
+    capture_selection_request(page_key)
 
     st.divider()
     st.markdown("<span id='cogniloop-contextual-assistant'></span>", unsafe_allow_html=True)
-    with st.expander("Ask Assistant About This Page", expanded=expanded):
-        st.caption(
-            "Highlight text anywhere on the page, choose Ask Assistant, then confirm your question here. "
-            "The Q&A will be saved locally."
-        )
+    with st.container(border=True):
+        st.subheader("Q&A History")
+        st.caption("Questions asked from selected page text are saved here locally.")
         key_ok, key_message = key_status()
         if not key_ok:
-            render_no_key_tutorial(key_message)
-
-        selected_text = st.text_area(
-            "Selected or copied text",
-            height=100,
-            placeholder="Paste the text you want to ask about.",
-            key=context_key,
-        )
-        question = st.text_input(
-            "Question",
-            placeholder="What does this mean, and what should I do next?",
-            key=question_key,
-        )
-
-        if st.button("Ask and Save", disabled=not key_ok or not question.strip(), key=f"context_ask::{page_key}"):
-            query_parts = []
-            if selected_text.strip():
-                query_parts.append(f"Context from page:\n{selected_text.strip()}")
-            query_parts.append(f"Question:\n{question.strip()}")
-            query = "\n\n".join(query_parts)
-
-            with st.status("Querying local Cognee memory...", expanded=True) as status:
-                try:
-                    results = recall_answer(query)
-                    answer = format_recall_results(results)
-                    add_qa_entry(page_key, question.strip(), selected_text.strip(), answer)
-                    st.success("Saved to Q&A history.")
-                    st.write(answer)
-                    status.update(label="Q&A saved.", state="complete")
-                except Exception as exc:
-                    answer = user_friendly_error(exc)
-                    add_qa_entry(page_key, question.strip(), selected_text.strip(), answer, status="error")
-                    st.error(answer)
-                    status.update(label="Assistant query failed.", state="error")
-
-        history = load_qa_history()
-        with st.expander(f"Q&A History ({len(history)})", expanded=False):
-            if not history:
-                st.caption("No Q&A saved yet.")
-            for entry in history[:10]:
-                st.markdown(f"**{entry['created_at']} - {entry['page']}**")
-                st.caption(entry["question"])
-                st.write(entry["answer"])
-                st.divider()
-            st.download_button(
-                "Download Q&A History",
-                data=history_markdown(history),
-                file_name="cogniloop_qa_history.md",
-                mime="text/markdown",
-                disabled=not history,
+            st.info(
+                "API key not added yet. This assistant is optional; the learning pages and Markdown exports still work."
             )
+            st.caption(f"Current local status: {key_message}")
+            st.link_button("How to add a local API key", "?page=ai_assistant")
+        history = load_qa_history()
+        if not history:
+            st.caption("No Q&A saved yet. Highlight text on the page, type a question in the popup, then choose Ask.")
+        for entry in history[:10]:
+            with st.container(border=True):
+                st.caption(f"{entry['created_at']} - {entry['page']}")
+                st.markdown(f"**Q:** {entry['question']}")
+                st.markdown("**A:**")
+                st.write(entry["answer"])
+        st.download_button(
+            "Download Q&A History",
+            data=history_markdown(history),
+            file_name="cogniloop_qa_history.md",
+            mime="text/markdown",
+            disabled=not history,
+        )
