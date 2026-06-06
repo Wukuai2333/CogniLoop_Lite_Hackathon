@@ -21,80 +21,97 @@ def inject_selection_assistant(page_key: str) -> None:
             const pageKey = {page_key_json};
             const parentDoc = window.parent.document;
             const parentWindow = window.parent;
-            const buttonId = "cogniloop-selection-ask";
+            const barId = "cogniloop-selection-ask-bar";
             const styleId = "cogniloop-selection-ask-style";
 
             if (!parentDoc.getElementById(styleId)) {{
                 const style = parentDoc.createElement("style");
                 style.id = styleId;
                 style.textContent = `
-                    #${{buttonId}} {{
+                    #${{barId}} {{
                         position: fixed;
                         z-index: 2147483647;
                         display: none;
+                        right: 1.25rem;
+                        bottom: 1.25rem;
+                        max-width: min(420px, calc(100vw - 2rem));
+                        grid-template-columns: minmax(0, 1fr) auto;
                         align-items: center;
-                        gap: 0.35rem;
-                        padding: 0.55rem 0.7rem;
+                        gap: 0.7rem;
+                        padding: 0.72rem;
                         border: 1px solid rgba(63, 185, 80, 0.72);
-                        border-radius: 999px;
+                        border-radius: 10px;
+                        background: rgba(13, 17, 23, 0.96);
+                        color: #ffffff;
+                        font: 600 13px/1.35 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.34);
+                        backdrop-filter: blur(8px);
+                    }}
+                    #${{barId}} .cogniloop-selection-preview {{
+                        color: #c9d1d9;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }}
+                    #${{barId}} .cogniloop-selection-preview span {{
+                        color: #8b949e;
+                        display: block;
+                        font-size: 11px;
+                        font-weight: 500;
+                    }}
+                    #${{barId}} button {{
+                        border: 1px solid rgba(63, 185, 80, 0.72);
+                        border-radius: 8px;
                         background: #238636;
                         color: #ffffff;
-                        font: 700 13px/1.1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.34);
+                        padding: 0.55rem 0.7rem;
+                        font-weight: 800;
                         cursor: pointer;
                     }}
-                    #${{buttonId}}:hover {{
+                    #${{barId}} button:hover {{
                         background: #2ea043;
                     }}
                 `;
                 parentDoc.head.appendChild(style);
             }}
 
-            let button = parentDoc.getElementById(buttonId);
-            if (!button) {{
-                button = parentDoc.createElement("button");
-                button.id = buttonId;
-                button.type = "button";
-                button.textContent = "Ask Assistant";
-                parentDoc.body.appendChild(button);
+            let bar = parentDoc.getElementById(barId);
+            if (!bar) {{
+                bar = parentDoc.createElement("div");
+                bar.id = barId;
+                bar.innerHTML = `
+                    <div class="cogniloop-selection-preview">
+                        <span>Selected text</span>
+                        <div data-role="preview"></div>
+                    </div>
+                    <button type="button" data-role="ask">Ask Assistant</button>
+                `;
+                parentDoc.body.appendChild(bar);
             }}
 
             function selectedText() {{
-                const selection = parentWindow.getSelection();
+                const selection = parentWindow.getSelection() || parentDoc.getSelection();
                 if (!selection || selection.rangeCount === 0) return "";
                 return selection.toString().replace(/\\s+/g, " ").trim();
             }}
 
-            function hideButton() {{
-                button.style.display = "none";
+            function hideBar() {{
+                bar.style.display = "none";
             }}
 
-            function showButton() {{
+            function updateBar() {{
                 const text = selectedText();
                 if (!text || text.length < 2) {{
-                    hideButton();
+                    hideBar();
                     return;
                 }}
 
-                const selection = parentWindow.getSelection();
-                const range = selection.getRangeAt(0);
-                const rect = range.getBoundingClientRect();
-                if (!rect || (!rect.width && !rect.height)) {{
-                    hideButton();
-                    return;
-                }}
-
-                const left = Math.min(
-                    Math.max(rect.left + rect.width / 2 - 58, 12),
-                    parentWindow.innerWidth - 132
-                );
-                const top = Math.max(rect.top - 46, 12);
-                button.style.left = `${{left}}px`;
-                button.style.top = `${{top}}px`;
-                button.style.display = "inline-flex";
+                const preview = bar.querySelector('[data-role="preview"]');
+                preview.textContent = text.length > 120 ? text.slice(0, 120) + "..." : text;
+                bar.style.display = "grid";
             }}
 
-            button.onclick = function () {{
+            bar.querySelector('[data-role="ask"]').onclick = function () {{
                 const text = selectedText();
                 if (!text) return;
 
@@ -108,23 +125,26 @@ def inject_selection_assistant(page_key: str) -> None:
             if (parentWindow.__cogniloopSelectionHandler) {{
                 parentDoc.removeEventListener("mouseup", parentWindow.__cogniloopSelectionHandler);
                 parentDoc.removeEventListener("keyup", parentWindow.__cogniloopSelectionHandler);
+                parentDoc.removeEventListener("selectionchange", parentWindow.__cogniloopSelectionHandler);
             }}
             if (parentWindow.__cogniloopSelectionScrollHandler) {{
                 parentDoc.removeEventListener("scroll", parentWindow.__cogniloopSelectionScrollHandler, true);
             }}
 
             parentWindow.__cogniloopSelectionHandler = function () {{
-                setTimeout(showButton, 40);
+                setTimeout(updateBar, 80);
             }};
-            parentWindow.__cogniloopSelectionScrollHandler = hideButton;
+            parentWindow.__cogniloopSelectionScrollHandler = updateBar;
 
             parentDoc.addEventListener("mouseup", parentWindow.__cogniloopSelectionHandler);
             parentDoc.addEventListener("keyup", parentWindow.__cogniloopSelectionHandler);
+            parentDoc.addEventListener("selectionchange", parentWindow.__cogniloopSelectionHandler);
             parentDoc.addEventListener("scroll", parentWindow.__cogniloopSelectionScrollHandler, true);
+            updateBar();
         }})();
         </script>
         """,
-        height=0,
+        height=1,
     )
 
 
