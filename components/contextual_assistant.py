@@ -219,6 +219,26 @@ def inject_selection_assistant(page_key: str) -> None:
                 bar.style.display = "none";
             }}
 
+            function isInsideBar(target) {{
+                return !!target && bar.contains(target);
+            }}
+
+            function isInteractingWithBar() {{
+                return isInsideBar(parentDoc.activeElement);
+            }}
+
+            function focusQuestionInput() {{
+                const questionInput = bar.querySelector('[data-role="question"]');
+                if (!questionInput || isInsideBar(parentDoc.activeElement)) {{
+                    return;
+                }}
+                parentWindow.setTimeout(function () {{
+                    if (bar.style.display !== "none") {{
+                        questionInput.focus({{ preventScroll: true }});
+                    }}
+                }}, 60);
+            }}
+
             function buildTargetUrl(text, question) {{
                 const targetUrl = new URL(parentWindow.location.href);
                 targetUrl.searchParams.set("ask_page", pageKey);
@@ -232,6 +252,9 @@ def inject_selection_assistant(page_key: str) -> None:
             function updateBar() {{
                 const text = selectedText();
                 if (!text || text.length < 2) {{
+                    if (isInteractingWithBar() && lastSelectedText) {{
+                        return;
+                    }}
                     hideBar();
                     return;
                 }}
@@ -263,16 +286,42 @@ def inject_selection_assistant(page_key: str) -> None:
                 bar.style.left = `${{left}}px`;
                 bar.style.top = `${{top}}px`;
                 bar.style.display = "inline-flex";
+                focusQuestionInput();
             }}
 
-            bar.querySelector('[data-role="ask"]').onclick = function (event) {{
+            const askButton = bar.querySelector('[data-role="ask"]');
+            const questionInput = bar.querySelector('[data-role="question"]');
+
+            bar.onmousedown = function (event) {{
+                event.stopPropagation();
+            }};
+            bar.onclick = function (event) {{
+                event.stopPropagation();
+            }};
+            bar.onkeyup = function (event) {{
+                event.stopPropagation();
+            }};
+
+            questionInput.onkeydown = function (event) {{
+                event.stopPropagation();
+                if (event.key === "Enter") {{
+                    event.preventDefault();
+                    askButton.click();
+                }}
+            }};
+            questionInput.oninput = function () {{
+                if (lastSelectedText) {{
+                    askButton.setAttribute("href", buildTargetUrl(lastSelectedText, questionInput.value || "What does this selected text mean?"));
+                }}
+            }};
+
+            askButton.onclick = function (event) {{
                 event.preventDefault();
                 event.stopPropagation();
                 const text = selectedText() || lastSelectedText;
                 if (!text) {{
                     return false;
                 }}
-                const questionInput = bar.querySelector('[data-role="question"]');
                 const question = questionInput.value || "What does this selected text mean?";
                 parentWindow.location.assign(buildTargetUrl(text, question));
                 return false;
@@ -287,7 +336,13 @@ def inject_selection_assistant(page_key: str) -> None:
                 parentDoc.removeEventListener("scroll", parentWindow.__cogniloopSelectionScrollHandler, true);
             }}
 
-            parentWindow.__cogniloopSelectionHandler = function () {{
+            parentWindow.__cogniloopSelectionHandler = function (event) {{
+                if (event && isInsideBar(event.target)) {{
+                    return;
+                }}
+                if (isInteractingWithBar()) {{
+                    return;
+                }}
                 if (selectionTimer) {{
                     parentWindow.clearTimeout(selectionTimer);
                 }}
