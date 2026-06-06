@@ -54,9 +54,18 @@ def current_bookmark(progress: dict) -> dict:
 
 
 def bookmark_label(bookmark: dict) -> str:
-    return (
-        f"{bookmark['stage_title']} · Step {bookmark['step_index'] + 1}: "
-        f"{bookmark['step_title']}"
+    return f"Step {bookmark['step_index'] + 1}: {bookmark['step_title']}"
+
+
+def render_step_context(stage: dict, step_index: int, item: dict) -> None:
+    st.markdown(
+        f"""
+        <div class="step-context">
+            <span>{stage['title']}</span>
+            <strong>Step {step_index + 1}: {item['text']}</strong>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
 
@@ -74,19 +83,29 @@ def render_bookmarks(progress: dict) -> None:
         with st.expander(title, expanded=False):
             if not bookmarks:
                 st.caption("No bookmarks yet. Add one from any substep.")
-            for index, bookmark in enumerate(bookmarks):
-                jump, remove = st.columns([0.82, 0.18])
-                with jump:
-                    if st.button(bookmark_label(bookmark), key=f"bookmark_jump::{index}", use_container_width=True):
-                        progress["current_stage"] = bookmark["stage_index"]
-                        progress["current_step"] = bookmark["step_index"]
-                        save_progress(progress)
-                        st.rerun()
-                with remove:
-                    if st.button("Remove", key=f"bookmark_remove::{index}", use_container_width=True):
-                        bookmarks.pop(index)
-                        save_progress(progress)
-                        st.rerun()
+            for stage_index, stage in enumerate(CHECKLIST_STAGES):
+                stage_bookmarks = [
+                    (index, bookmark)
+                    for index, bookmark in enumerate(bookmarks)
+                    if bookmark["stage_index"] == stage_index
+                ]
+                if not stage_bookmarks:
+                    continue
+
+                st.markdown(f"**{stage['title']}**")
+                for index, bookmark in stage_bookmarks:
+                    jump, remove = st.columns([0.84, 0.16])
+                    with jump:
+                        if st.button(bookmark_label(bookmark), key=f"bookmark_jump::{index}", use_container_width=True):
+                            progress["current_stage"] = bookmark["stage_index"]
+                            progress["current_step"] = bookmark["step_index"]
+                            save_progress(progress)
+                            st.rerun()
+                    with remove:
+                        if st.button("Remove", key=f"bookmark_remove::{index}", use_container_width=True):
+                            bookmarks.pop(index)
+                            save_progress(progress)
+                            st.rerun()
 
 
 def clamp_position(progress: dict) -> None:
@@ -154,6 +173,33 @@ def render_reader(progress: dict) -> None:
     key = step_key(stage["id"], step_index)
 
     completed, total = total_counts(progress)
+    st.markdown(
+        """
+        <style>
+        .step-context {
+            border: 1px solid rgba(139, 148, 158, 0.32);
+            border-left: 4px solid #2f81f7;
+            border-radius: 6px;
+            padding: 0.7rem 0.85rem;
+            margin: 0.6rem 0 1rem 0;
+            background: rgba(139, 148, 158, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .step-context span {
+            color: #8b949e;
+            font-size: 0.84rem;
+        }
+        .step-context strong {
+            color: inherit;
+            font-size: 1rem;
+            line-height: 1.35;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     top_left, top_right = st.columns([0.78, 0.22])
     with top_left:
         st.progress(completed / total if total else 0)
@@ -165,7 +211,7 @@ def render_reader(progress: dict) -> None:
 
     left, right = st.columns([0.72, 0.28])
     with left:
-        st.caption(f"{stage['title']} · Step {step_index + 1} of {len(stage['items'])}")
+        render_step_context(stage, step_index, item)
         st.header(item["text"])
         st.write(stage["goal"])
         st.info(item["detail"])
