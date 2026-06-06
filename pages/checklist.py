@@ -10,6 +10,9 @@ def render_agent_alignment_hint() -> None:
         "Hint: keep your agents on the same page as you. Download your progress Markdown with notes from each step "
         "to create clearer prompts, reduce repeated context, and avoid losing track of decisions."
     )
+    if st.button("Show download buttons", key="checklist_export_focus_top"):
+        st.session_state["checklist_focus_export"] = True
+        st.rerun()
 
 
 def render() -> None:
