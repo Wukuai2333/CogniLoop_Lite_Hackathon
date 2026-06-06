@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 
 from content.checklist_content import CHECKLIST_STAGES
 from utils.export import full_markdown, stage_markdown
@@ -178,20 +177,6 @@ def render_export_focus(anchor_id: str, should_focus: bool) -> None:
         #{anchor_id} {{
             scroll-margin-top: 5rem;
         }}
-        .checklist-export-focus {{
-            border: 1px solid rgba(46, 160, 67, 0.42);
-            border-radius: 8px;
-            padding: 0.75rem;
-            background: rgba(46, 160, 67, 0.07);
-        }}
-        .checklist-export-focus.is-active {{
-            animation: checklistExportPulse 2.2s ease-in-out 1;
-        }}
-        @keyframes checklistExportPulse {{
-            0% {{ box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.62); }}
-            50% {{ box-shadow: 0 0 0 8px rgba(46, 160, 67, 0.14); }}
-            100% {{ box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); }}
-        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -295,13 +280,8 @@ def render_reader(progress: dict) -> None:
         render_stage_picker(progress)
         st.divider()
         st.subheader("Current Stage Notes")
-        should_focus = bool(st.session_state.pop("checklist_focus_export", False))
-        render_export_focus("checklist-export-section", should_focus)
-        active_class = " is-active" if should_focus else ""
-        st.markdown(
-            f"<div id='checklist-export-section' class='checklist-export-focus{active_class}'>",
-            unsafe_allow_html=True,
-        )
+        render_export_focus("checklist-export-section", False)
+        st.markdown("<span id='checklist-export-section'></span>", unsafe_allow_html=True)
         render_export_hint()
         st.caption("Click either download button to share the current stage or full progress with your agent.")
         st.download_button(
@@ -318,6 +298,5 @@ def render_reader(progress: dict) -> None:
             mime="text/markdown",
             use_container_width=True,
         )
-        st.markdown("</div>", unsafe_allow_html=True)
         st.divider()
         st.caption(f"Reading position: {flat_position(stage_index, step_index)} / {total}")

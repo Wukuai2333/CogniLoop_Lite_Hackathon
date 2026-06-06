@@ -79,20 +79,6 @@ def render_export_focus(anchor_id: str, should_focus: bool) -> None:
         #{anchor_id} {{
             scroll-margin-top: 5rem;
         }}
-        .export-focus-card {{
-            border: 1px solid rgba(46, 160, 67, 0.42);
-            border-radius: 8px;
-            padding: 0.75rem;
-            background: rgba(46, 160, 67, 0.07);
-        }}
-        .export-focus-card.is-active {{
-            animation: exportFocusPulse 2.2s ease-in-out 1;
-        }}
-        @keyframes exportFocusPulse {{
-            0% {{ box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.62); }}
-            50% {{ box-shadow: 0 0 0 8px rgba(46, 160, 67, 0.14); }}
-            100% {{ box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); }}
-        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -111,15 +97,59 @@ def render_export_focus(anchor_id: str, should_focus: bool) -> None:
         )
 
 
-def render_agent_alignment_hint(key: str, show_focus_button: bool = True) -> None:
-    st.info(
-        "Hint: keep your agents on the same page as you. Export your current progress as Markdown, including notes "
-        "from each step, so you can give agents clearer structure, more token-efficient context, and less chance of "
-        "losing the thread during implementation."
+def render_agent_alignment_hint(show_focus_button: bool = True) -> None:
+    button_html = ""
+    if show_focus_button:
+        button_html = """
+            <button id="docs-export-focus-button" type="button">Show download buttons</button>
+        """
+    components.html(
+        f"""
+        <style>
+        .agent-hint-card {{
+            border-radius: 8px;
+            background: rgba(31, 111, 235, 0.18);
+            color: #58a6ff;
+            padding: 1rem 1.1rem;
+            font: 500 16px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }}
+        .agent-hint-card button {{
+            margin-top: 0.85rem;
+            border: 1px solid rgba(88, 166, 255, 0.44);
+            border-radius: 8px;
+            background: rgba(13, 17, 23, 0.62);
+            color: #f0f6fc;
+            padding: 0.62rem 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }}
+        .agent-hint-card button:hover {{
+            border-color: rgba(88, 166, 255, 0.78);
+            background: rgba(31, 111, 235, 0.22);
+        }}
+        </style>
+        <div class="agent-hint-card">
+            <div>
+                Hint: keep your agents on the same page as you. Export your current progress as Markdown, including
+                notes from each step, so you can give agents clearer structure, more token-efficient context, and less
+                chance of losing the thread during implementation.
+            </div>
+            {button_html}
+        </div>
+        <script>
+        const button = document.getElementById("docs-export-focus-button");
+        if (button) {{
+            button.addEventListener("click", () => {{
+                const target = window.parent.document.getElementById("docs-export-section");
+                if (target) {{
+                    target.scrollIntoView({{ behavior: "smooth", block: "center" }});
+                }}
+            }});
+        }}
+        </script>
+        """,
+        height=150 if show_focus_button else 130,
     )
-    if show_focus_button and st.button("Show download buttons", key=key):
-        st.session_state["docs_focus_export"] = True
-        st.rerun()
 
 
 def render_route_selector(progress: dict) -> dict:
@@ -312,14 +342,9 @@ def render_step(route: dict, progress: dict) -> None:
 
         st.divider()
         st.subheader("Export")
-        should_focus = bool(st.session_state.pop("docs_focus_export", False))
-        render_export_focus("docs-export-section", should_focus)
-        active_class = " is-active" if should_focus else ""
-        st.markdown(
-            f"<div id='docs-export-section' class='export-focus-card{active_class}'>",
-            unsafe_allow_html=True,
-        )
-        render_agent_alignment_hint("docs_export_focus_inside", show_focus_button=False)
+        render_export_focus("docs-export-section", False)
+        st.markdown("<span id='docs-export-section'></span>", unsafe_allow_html=True)
+        render_agent_alignment_hint(show_focus_button=False)
         st.caption("Use these two download buttons to package your current route notes or all route notes for your agent.")
         st.download_button(
             "Download This Route",
@@ -335,7 +360,6 @@ def render_step(route: dict, progress: dict) -> None:
             mime="text/markdown",
             use_container_width=True,
         )
-        st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render() -> None:
@@ -359,7 +383,7 @@ def render() -> None:
     with top_b:
         st.link_button(OFFICIAL_COLAB_SETUP["title"], OFFICIAL_COLAB_SETUP["url"], use_container_width=True)
     st.caption(OFFICIAL_COLAB_SETUP["description"])
-    render_agent_alignment_hint("docs_export_focus_top")
+    render_agent_alignment_hint()
 
     route = render_route_selector(progress)
     st.caption(f"Best for: {route['best_for']}")
