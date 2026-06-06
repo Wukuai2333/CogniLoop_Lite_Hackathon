@@ -21,6 +21,25 @@ def render() -> None:
         "into Cognee memory, ask questions, and export their notes."
     )
 
+    st.subheader("Why Cognee Matters Here")
+    st.markdown(
+        "Cognee's strongest value is not simply that it can be installed with `pip`. "
+        "Its real advantage is preserving context across sequential work. In a hackathon, participants move through "
+        "setup, docs reading, project scoping, implementation, debugging, and demo preparation. Important context often "
+        "gets lost between those steps. Cognee helps turn that fragile context into durable, queryable memory."
+    )
+    st.markdown(
+        "The product story can be understood as **Capture -> Model -> Recall**. Cognee can capture materials such as "
+        "files, databases, APIs, chat logs, and project notes; model raw data into entities, relationships, rules, and "
+        "graph memory; then expose that long-lived memory to agents and runtimes such as Claude Code, LangGraph, MCP "
+        "clients, or custom applications."
+    )
+    st.info(
+        "CogniLoop Lite is a small prototype of this idea. Our current dataset is intentionally simple, but the pattern "
+        "is the important part: event materials and participant notes can become a shared memory layer that future agents "
+        "can query, extend, and reuse."
+    )
+
     st.subheader("Publish Mode")
     publish_cols = st.columns(2)
     with publish_cols[0]:
