@@ -71,6 +71,6 @@ def render() -> None:
             step_card(f"{index + 1}. {title}", body)
 
     st.info(
-        "Static learning pages work without an API key. Cognee-powered assistant features are optional local tests "
-        "and can be skipped completely."
+        "You can use the learning pages, docs routes, task progress tracker, notes, and exports without an API key. "
+        "Only the optional AI Assistant tests need a local `.env` key."
     )

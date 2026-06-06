@@ -156,6 +156,15 @@ def inject_selection_assistant(page_key: str) -> None:
                 bar.style.display = "none";
             }}
 
+            function buildTargetUrl(text) {{
+                const targetUrl = new URL(parentWindow.location.href);
+                targetUrl.searchParams.set("ask_page", pageKey);
+                targetUrl.searchParams.set("ask_selection", text.slice(0, 1600));
+                targetUrl.searchParams.set("ask_ts", Date.now().toString());
+                targetUrl.hash = "cogniloop-contextual-assistant";
+                return targetUrl.toString();
+            }}
+
             function updateBar() {{
                 const text = selectedText();
                 if (!text || text.length < 2) {{
@@ -181,12 +190,7 @@ def inject_selection_assistant(page_key: str) -> None:
                     }}
                 }}
 
-                const targetUrl = new URL(parentWindow.location.href);
-                targetUrl.searchParams.set("ask_page", pageKey);
-                targetUrl.searchParams.set("ask_selection", text.slice(0, 1600));
-                targetUrl.searchParams.set("ask_ts", Date.now().toString());
-                targetUrl.hash = "cogniloop-contextual-assistant";
-                bar.querySelector('[data-role="ask"]').setAttribute("href", targetUrl.toString());
+                bar.querySelector('[data-role="ask"]').setAttribute("href", buildTargetUrl(text));
 
                 left = Math.min(Math.max(left, 12), parentWindow.innerWidth - 364);
                 top = Math.min(Math.max(top, 12), parentWindow.innerHeight - 72);
@@ -196,7 +200,14 @@ def inject_selection_assistant(page_key: str) -> None:
             }}
 
             bar.querySelector('[data-role="ask"]').onclick = function (event) {{
+                event.preventDefault();
                 event.stopPropagation();
+                const text = selectedText() || lastSelectedText;
+                if (!text) {{
+                    return false;
+                }}
+                parentWindow.location.assign(buildTargetUrl(text));
+                return false;
             }};
 
             if (parentWindow.__cogniloopSelectionHandler) {{
