@@ -1,3 +1,5 @@
+import html
+
 import streamlit as st
 
 from components.layout import page_header
@@ -73,22 +75,70 @@ def render_action_styles() -> None:
             font-weight: 700;
             border-width: 1px;
         }
+        div[data-testid="stButton"] > button[kind="primary"] {
+            background: #238636;
+            border-color: #2ea043;
+            color: #ffffff;
+        }
+        div[data-testid="stButton"] > button[kind="primary"]:hover {
+            background: #2ea043;
+            border-color: #3fb950;
+            color: #ffffff;
+        }
         div[data-testid="stTextArea"] textarea {
-            border: 1px solid rgba(47, 129, 247, 0.55);
+            border: 1px solid rgba(46, 160, 67, 0.58);
             border-radius: 8px;
             font-size: 1rem;
         }
         .assistant-action-hint {
-            border-left: 4px solid #2f81f7;
-            background: rgba(47, 129, 247, 0.10);
+            border-left: 4px solid #2ea043;
+            background: rgba(46, 160, 67, 0.12);
             padding: 0.85rem 1rem;
             border-radius: 6px;
             margin: 0.7rem 0 1rem 0;
         }
         .assistant-answer {
-            font-size: 1.02rem;
-            line-height: 1.65;
-            padding: 0.5rem 0;
+            font-size: 1.2rem;
+            line-height: 1.72;
+            padding: 1rem 1.05rem;
+            margin: 0.75rem 0 1rem 0;
+            border: 1px solid rgba(46, 160, 67, 0.35);
+            border-radius: 8px;
+            background: rgba(46, 160, 67, 0.08);
+        }
+        .assistant-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.65rem;
+            margin: 0.6rem 0 0.7rem 0;
+        }
+        .assistant-meta-card {
+            border: 1px solid rgba(139, 148, 158, 0.22);
+            border-radius: 6px;
+            padding: 0.55rem 0.65rem;
+            background: rgba(139, 148, 158, 0.06);
+            min-width: 0;
+        }
+        .assistant-meta-label {
+            color: #8b949e;
+            font-size: 0.72rem;
+            margin-bottom: 0.22rem;
+        }
+        .assistant-meta-value {
+            color: #c9d1d9;
+            font-size: 0.86rem;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+        }
+        .assistant-score-note {
+            color: #8b949e;
+            font-size: 0.78rem;
+            margin: 0.15rem 0 0.5rem 0;
+        }
+        @media (max-width: 900px) {
+            .assistant-meta-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
         </style>
         """,
@@ -203,16 +253,43 @@ def render() -> None:
                     normalized = normalize_recall_result(result)
                     with st.container(border=True):
                         st.markdown(f"#### Answer {index}")
+                        answer_text = html.escape(normalized["answer"] or "No answer text returned.")
                         st.markdown(
-                            f"<div class='assistant-answer'>{normalized['answer']}</div>",
+                            f"<div class='assistant-answer'>{answer_text}</div>",
                             unsafe_allow_html=True,
                         )
 
-                        meta_cols = st.columns(4)
-                        meta_cols[0].metric("Source", normalized["source"] or "n/a")
-                        meta_cols[1].metric("Search", normalized["search_type"] or "n/a")
-                        meta_cols[2].metric("Dataset", normalized["dataset_name"] or "n/a")
-                        meta_cols[3].metric("Score", normalized["score"] if normalized["score"] is not None else "n/a")
+                        source = html.escape(str(normalized["source"] or "n/a"))
+                        search_type = html.escape(str(normalized["search_type"] or "n/a"))
+                        dataset_name = html.escape(str(normalized["dataset_name"] or "n/a"))
+                        score = html.escape(str(normalized["score"] if normalized["score"] is not None else "n/a"))
+                        st.markdown(
+                            f"""
+                            <div class="assistant-meta-grid">
+                                <div class="assistant-meta-card">
+                                    <div class="assistant-meta-label">Source</div>
+                                    <div class="assistant-meta-value">{source}</div>
+                                </div>
+                                <div class="assistant-meta-card">
+                                    <div class="assistant-meta-label">Search type</div>
+                                    <div class="assistant-meta-value">{search_type}</div>
+                                </div>
+                                <div class="assistant-meta-card">
+                                    <div class="assistant-meta-label">Dataset</div>
+                                    <div class="assistant-meta-value">{dataset_name}</div>
+                                </div>
+                                <div class="assistant-meta-card">
+                                    <div class="assistant-meta-label">Cognee score</div>
+                                    <div class="assistant-meta-value">{score}</div>
+                                </div>
+                            </div>
+                            <div class="assistant-score-note">
+                                Cognee score is an optional confidence or relevance value returned by some search modes.
+                                Graph completion often returns <code>n/a</code>, so it is diagnostic metadata, not a user grade.
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
 
                         with st.expander("Raw result"):
                             st.json(normalized["raw"])
