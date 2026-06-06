@@ -23,6 +23,7 @@ def inject_selection_assistant(page_key: str) -> None:
             const parentWindow = window.parent;
             const barId = "cogniloop-selection-ask-bar";
             const styleId = "cogniloop-selection-ask-style";
+            let lastSelectedText = "";
 
             if (!parentDoc.getElementById(styleId)) {{
                 const style = parentDoc.createElement("style");
@@ -106,19 +107,23 @@ def inject_selection_assistant(page_key: str) -> None:
                     return;
                 }}
 
+                lastSelectedText = text;
                 const preview = bar.querySelector('[data-role="preview"]');
                 preview.textContent = text.length > 120 ? text.slice(0, 120) + "..." : text;
                 bar.style.display = "grid";
             }}
 
-            bar.querySelector('[data-role="ask"]').onclick = function () {{
-                const text = selectedText();
+            bar.querySelector('[data-role="ask"]').onclick = function (event) {{
+                event.preventDefault();
+                event.stopPropagation();
+                const text = selectedText() || lastSelectedText;
                 if (!text) return;
 
                 const url = new URL(parentWindow.location.href);
                 url.searchParams.set("ask_page", pageKey);
                 url.searchParams.set("ask_selection", text.slice(0, 1600));
                 url.searchParams.set("ask_ts", Date.now().toString());
+                url.hash = "cogniloop-contextual-assistant";
                 parentWindow.location.href = url.toString();
             }};
 
@@ -161,8 +166,10 @@ def render_contextual_assistant(page_key: str) -> None:
                 question_key,
                 "What does this selected text mean, and what should I do next?",
             )
+            st.toast("Selected text added to Ask Assistant.")
 
     st.divider()
+    st.markdown("<span id='cogniloop-contextual-assistant'></span>", unsafe_allow_html=True)
     with st.expander("Ask Assistant About This Page", expanded=bool(selected_from_query)):
         st.caption(
             "Highlight text anywhere on the page, choose Ask Assistant, then confirm your question here. "
