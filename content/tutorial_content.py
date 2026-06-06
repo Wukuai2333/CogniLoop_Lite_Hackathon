@@ -8,8 +8,8 @@ TROUBLESHOOTING_ROWS = [
 ]
 
 
-WINDOWS_INSTALL = """mkdir cogniloop-lite
-cd cogniloop-lite
+WINDOWS_INSTALL = """mkdir your-project-name
+cd your-project-name
 
 pip install uv
 uv venv
@@ -18,8 +18,8 @@ uv venv
 uv pip install cognee"""
 
 
-POSIX_INSTALL = """mkdir cogniloop-lite
-cd cogniloop-lite
+POSIX_INSTALL = """mkdir your-project-name
+cd your-project-name
 
 pip install uv
 uv venv

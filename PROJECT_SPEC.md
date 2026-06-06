@@ -96,8 +96,8 @@ Show the requirements:
 Include commands:
 
 ```powershell
-mkdir cogniloop-lite
-cd cogniloop-lite
+mkdir your-project-name
+cd your-project-name
 
 pip install uv
 uv venv
@@ -123,8 +123,8 @@ Then retry:
 Include commands:
 
 ```bash
-mkdir cogniloop-lite
-cd cogniloop-lite
+mkdir your-project-name
+cd your-project-name
 
 pip install uv
 uv venv
