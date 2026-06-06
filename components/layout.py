@@ -4,6 +4,7 @@ import streamlit as st
 PAGES = {
     "Home": "home",
     "Cognee Tutorial": "tutorial",
+    "Docs Navigator": "docs_navigator",
     "Checklist": "checklist",
     "Conversation-first Workflow": "conversation_first",
     "Customize Your Own Cognee": "customize",

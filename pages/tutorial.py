@@ -2,6 +2,7 @@ import streamlit as st
 
 from components.layout import page_header
 from content.tutorial_content import POSIX_INSTALL, TROUBLESHOOTING_ROWS, WINDOWS_INSTALL
+from utils.install_check import cognee_import_status, python_version_status
 
 
 def render() -> None:
@@ -35,6 +36,26 @@ def render() -> None:
     st.header("Test Installation")
     st.code('python -c "import cognee; print(\'Cognee installed successfully\')"', language="bash")
     st.code("Cognee installed successfully", language="text")
+
+    st.subheader("Local Environment Check")
+    st.write("This checks the Python environment currently running this Streamlit app.")
+    py_ok, py_message = python_version_status()
+    cognee_ok, cognee_message = cognee_import_status()
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if py_ok:
+            st.success(py_message)
+        else:
+            st.error(py_message)
+    with col2:
+        if cognee_ok:
+            st.success(cognee_message)
+        else:
+            st.warning(cognee_message)
+
+    if not cognee_ok:
+        st.code("uv pip install cognee", language="bash")
 
     st.header("API Key Setup")
     st.write("Copy `.env.example` to `.env` only when you want to enable future AI companion features.")
