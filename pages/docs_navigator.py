@@ -2,19 +2,236 @@ import streamlit as st
 
 from components.layout import page_header
 from content.docs_routes import DOC_ROUTES
+from utils.docs_export import all_routes_markdown, route_markdown
+from utils.docs_progress import docs_step_key, load_docs_progress, save_docs_progress
 
 
-def render_route(route: dict) -> None:
-    st.subheader(route["name"])
-    st.write(route["best_for"])
-    st.caption(f"Outcome: {route['outcome']}")
+def route_by_id(route_id: str) -> dict:
+    return next((route for route in DOC_ROUTES if route["id"] == route_id), DOC_ROUTES[0])
 
-    for index, step in enumerate(route["steps"], start=1):
-        with st.container(border=True):
-            st.markdown(f"**{index}. {step['title']}**")
-            st.write(step["why"])
-            st.caption(f"Deliverable: {step['deliverable']}")
-            st.link_button("Open Official Docs", step["url"], use_container_width=False)
+
+def completed_count(route: dict, progress: dict) -> int:
+    return sum(
+        1
+        for index, _ in enumerate(route["steps"])
+        if progress["completed"].get(docs_step_key(route["id"], index))
+    )
+
+
+def render_autosave() -> None:
+    st.markdown(
+        """
+        <style>
+        .docs-autosave {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            color: #8b949e;
+            font-size: 0.86rem;
+            justify-content: flex-end;
+        }
+        .docs-autosave-dot {
+            width: 0.55rem;
+            height: 0.55rem;
+            border-radius: 999px;
+            background: #2ea043;
+            animation: docsAutosavePulse 1.4s ease-in-out infinite;
+        }
+        .docs-step-context {
+            border: 1px solid rgba(139, 148, 158, 0.32);
+            border-left: 4px solid #2f81f7;
+            border-radius: 6px;
+            padding: 0.75rem 0.9rem;
+            margin: 0.75rem 0 1rem 0;
+            background: rgba(139, 148, 158, 0.08);
+        }
+        .docs-step-context span {
+            display: block;
+            color: #8b949e;
+            font-size: 0.84rem;
+            margin-bottom: 0.22rem;
+        }
+        .docs-step-context strong {
+            font-size: 1rem;
+            line-height: 1.35;
+        }
+        @keyframes docsAutosavePulse {
+            0% { opacity: 0.35; transform: scale(0.86); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.35; transform: scale(0.86); }
+        }
+        </style>
+        <div class="docs-autosave">
+            <span class="docs-autosave-dot"></span>
+            <span>Auto saved</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_route_selector(progress: dict) -> dict:
+    route_names = [route["name"] for route in DOC_ROUTES]
+    current_route = route_by_id(progress["selected_route"])
+    selected_name = st.segmented_control("Route", route_names, default=current_route["name"])
+    selected_route = next(route for route in DOC_ROUTES if route["name"] == selected_name)
+
+    if selected_route["id"] != progress["selected_route"]:
+        progress["selected_route"] = selected_route["id"]
+        progress["current_steps"].setdefault(selected_route["id"], 0)
+        save_docs_progress(progress)
+        st.rerun()
+
+    return selected_route
+
+
+def render_context(route: dict, step_index: int, step: dict) -> None:
+    st.markdown(
+        f"""
+        <div class="docs-step-context">
+            <span>{route['name']} Route · Step {step_index + 1} of {len(route['steps'])}</span>
+            <strong>{step['title']}</strong>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def current_bookmark(route: dict, step_index: int) -> dict:
+    step = route["steps"][step_index]
+    return {
+        "route_id": route["id"],
+        "route_name": route["name"],
+        "step_index": step_index,
+        "step_title": step["title"],
+    }
+
+
+def render_bookmarks(progress: dict) -> None:
+    add_col, list_col = st.columns([0.18, 0.82])
+    route = route_by_id(progress["selected_route"])
+    step_index = progress["current_steps"].get(route["id"], 0)
+
+    with add_col:
+        if st.button("Add Bookmark", use_container_width=True):
+            progress.setdefault("bookmarks", []).append(current_bookmark(route, step_index))
+            save_docs_progress(progress)
+            st.toast("Bookmark added.")
+            st.rerun()
+
+    with list_col:
+        bookmarks = progress.setdefault("bookmarks", [])
+        with st.expander(f"Docs Bookmarks ({len(bookmarks)})", expanded=False):
+            if not bookmarks:
+                st.caption("No docs bookmarks yet.")
+
+            for grouped_route in DOC_ROUTES:
+                route_bookmarks = [
+                    (index, bookmark)
+                    for index, bookmark in enumerate(bookmarks)
+                    if bookmark["route_id"] == grouped_route["id"]
+                ]
+                if not route_bookmarks:
+                    continue
+
+                st.markdown(f"**{grouped_route['name']}**")
+                for index, bookmark in route_bookmarks:
+                    jump, remove = st.columns([0.84, 0.16])
+                    label = f"Step {bookmark['step_index'] + 1}: {bookmark['step_title']}"
+                    with jump:
+                        if st.button(label, key=f"docs_bookmark_jump::{index}", use_container_width=True):
+                            progress["selected_route"] = bookmark["route_id"]
+                            progress["current_steps"][bookmark["route_id"]] = bookmark["step_index"]
+                            save_docs_progress(progress)
+                            st.rerun()
+                    with remove:
+                        if st.button("Remove", key=f"docs_bookmark_remove::{index}", use_container_width=True):
+                            bookmarks.pop(index)
+                            save_docs_progress(progress)
+                            st.rerun()
+
+
+def move_step(progress: dict, route: dict, delta: int) -> None:
+    current = progress["current_steps"].get(route["id"], 0)
+    next_step = max(0, min(current + delta, len(route["steps"]) - 1))
+    progress["current_steps"][route["id"]] = next_step
+    save_docs_progress(progress)
+
+
+def render_step(route: dict, progress: dict) -> None:
+    progress["current_steps"].setdefault(route["id"], 0)
+    step_index = max(0, min(progress["current_steps"][route["id"]], len(route["steps"]) - 1))
+    progress["current_steps"][route["id"]] = step_index
+    step = route["steps"][step_index]
+    key = docs_step_key(route["id"], step_index)
+
+    done = completed_count(route, progress)
+    top_left, top_right = st.columns([0.78, 0.22])
+    with top_left:
+        st.progress(done / len(route["steps"]))
+        st.caption(f"Route progress: {done} / {len(route['steps'])} steps completed")
+    with top_right:
+        render_autosave()
+
+    render_bookmarks(progress)
+
+    left, right = st.columns([0.7, 0.3])
+    with left:
+        render_context(route, step_index, step)
+        st.header(step["title"])
+        st.write(step["why"])
+        st.info(f"Why this matters for hackathon: {step['hackathon_use']}")
+        st.success(f"Deliverable: {step['deliverable']}")
+        st.link_button("Open Official Docs", step["url"])
+
+        progress["completed"][key] = st.checkbox(
+            "Mark as done",
+            value=bool(progress["completed"].get(key)),
+            key=f"docs_done::{key}",
+        )
+        progress["notes"][key] = st.text_area(
+            step["note_prompt"],
+            value=progress["notes"].get(key, ""),
+            height=180,
+            key=f"docs_note::{key}",
+        )
+        save_docs_progress(progress)
+
+        prev_col, next_col = st.columns(2)
+        with prev_col:
+            if st.button("Previous", disabled=step_index == 0, use_container_width=True):
+                move_step(progress, route, -1)
+                st.rerun()
+        with next_col:
+            if st.button("Next", disabled=step_index == len(route["steps"]) - 1, use_container_width=True):
+                move_step(progress, route, 1)
+                st.rerun()
+
+    with right:
+        st.subheader("Route Map")
+        for index, item in enumerate(route["steps"]):
+            marker = "Done" if progress["completed"].get(docs_step_key(route["id"], index)) else "Open"
+            if st.button(f"{index + 1}. {item['title']} · {marker}", key=f"route_step::{route['id']}::{index}", use_container_width=True):
+                progress["current_steps"][route["id"]] = index
+                save_docs_progress(progress)
+                st.rerun()
+
+        st.divider()
+        st.subheader("Export")
+        st.download_button(
+            "Download This Route",
+            data=route_markdown(route, progress),
+            file_name=f"{route['id']}_docs_notes.md",
+            mime="text/markdown",
+            use_container_width=True,
+        )
+        st.download_button(
+            "Download All Routes",
+            data=all_routes_markdown(progress),
+            file_name="cogniloop_docs_navigator_notes.md",
+            mime="text/markdown",
+            use_container_width=True,
+        )
 
 
 def render() -> None:
@@ -23,19 +240,25 @@ def render() -> None:
         "Turn official Cognee documentation into hackathon-ready learning routes.",
     )
 
+    if "docs_progress" not in st.session_state:
+        st.session_state.docs_progress = load_docs_progress()
+
+    progress = st.session_state.docs_progress
+
     st.write(
-        "Cognee's official documentation is the source of truth. This navigator adds a hackathon layer: "
-        "what to read, why it matters, and what artifact your team should produce after each step."
+        "Cognee's official documentation remains the source of truth. This page adds a companion layer: "
+        "route selection, task framing, notes, bookmarks, and exportable project context."
     )
+    st.caption("Docs index: https://docs.cognee.ai/llms.txt")
 
-    route_names = [route["name"] for route in DOC_ROUTES]
-    selected = st.segmented_control("Route", route_names, default=route_names[0])
-    route = next(route for route in DOC_ROUTES if route["name"] == selected)
+    route = render_route_selector(progress)
+    st.caption(f"Best for: {route['best_for']}")
+    st.caption(f"Expected outcome: {route['outcome']}")
 
-    render_route(route)
+    render_step(route, progress)
 
     st.divider()
     st.info(
-        "Future BYOK idea: combine selected route, checklist notes, and bookmarks into a project-specific prompt. "
-        "For now, this page stays static and safe without an API key."
+        "Future BYOK idea: generate a project-specific implementation prompt from route notes, checklist notes, "
+        "and bookmarks. This static version does not call any API."
     )

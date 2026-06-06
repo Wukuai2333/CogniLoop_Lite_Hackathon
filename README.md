@@ -6,7 +6,7 @@ CogniLoop Lite is a local-first Streamlit MVP for Cognee onboarding. It helps ha
 
 - Home page
 - Static Cognee tutorial
-- Cognee docs navigator for hackathon learning routes
+- Cognee docs navigator with hackathon learning routes, notes, bookmarks, and Markdown export
 - Timeline checklist with local saved progress, optional notes, and Markdown export
 - Conversation-first workflow placeholder
 - Customize Your Own Cognee guide
