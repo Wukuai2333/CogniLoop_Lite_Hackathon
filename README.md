@@ -16,6 +16,8 @@ CogniLoop Lite is a local-first Streamlit MVP for Cognee onboarding. It helps ha
 The static pages do not call Cognee APIs and do not require an API key.
 The AI Assistant page stays disabled until a key is present in local `.env` or existing environment variables.
 
+The assistant demo ingests local Markdown files from `/data`, including Cognee onboarding notes and a small business crisis mini dataset. Replace these files with your own project materials to turn the app into a project-specific Cognee template.
+
 ## Setup
 
 ```powershell

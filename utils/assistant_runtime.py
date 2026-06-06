@@ -107,3 +107,25 @@ def format_recall_results(results: list[Any]) -> str:
         else:
             chunks.append(f"Result {index}\n{result}")
     return "\n\n".join(chunks)
+
+
+def normalize_recall_result(result: Any) -> dict[str, Any]:
+    if hasattr(result, "model_dump"):
+        data = result.model_dump()
+    elif isinstance(result, dict):
+        data = result
+    else:
+        data = {"text": str(result)}
+
+    raw = data.get("raw")
+    raw_value = raw.get("value") if isinstance(raw, dict) else None
+    text = data.get("text") or raw_value or str(result)
+
+    return {
+        "answer": text,
+        "source": data.get("source"),
+        "search_type": data.get("search_type"),
+        "dataset_name": data.get("dataset_name"),
+        "score": data.get("score"),
+        "raw": data,
+    }
