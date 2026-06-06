@@ -15,6 +15,26 @@ def route_markdown(route: dict, progress: dict) -> str:
         key = docs_step_key(route["id"], index - 1)
         checked = "x" if progress["completed"].get(key) else " "
         note = progress["notes"].get(key, "").strip()
+        runbook_lines = []
+        if step.get("local_steps"):
+            runbook_lines.extend(["Run locally:", ""])
+            for item in step["local_steps"]:
+                language = item.get("language", "")
+                runbook_lines.extend(
+                    [
+                        f"### {item['title']}",
+                        "",
+                        f"```{language}",
+                        item["code"],
+                        "```",
+                        "",
+                    ]
+                )
+        if step.get("verify"):
+            runbook_lines.extend(["What to verify:", ""])
+            runbook_lines.extend([f"- {item}" for item in step["verify"]])
+            runbook_lines.append("")
+
         lines.extend(
             [
                 f"## {index}. {step['title']}",
@@ -25,6 +45,7 @@ def route_markdown(route: dict, progress: dict) -> str:
                 f"- Hackathon use: {step['hackathon_use']}",
                 f"- Deliverable: {step['deliverable']}",
                 "",
+                *runbook_lines,
                 "Notes:",
                 note or "No notes yet.",
                 "",

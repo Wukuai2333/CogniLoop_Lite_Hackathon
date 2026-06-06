@@ -98,6 +98,26 @@ def render_context(route: dict, step_index: int, step: dict) -> None:
     )
 
 
+def render_local_runbook(step: dict) -> None:
+    local_steps = step.get("local_steps", [])
+    verify_items = step.get("verify", [])
+    if not local_steps and not verify_items:
+        return
+
+    st.markdown("#### Run Locally")
+    st.caption(
+        "Use these commands in your own terminal, then come back here to check off results and save notes."
+    )
+    for item in local_steps:
+        st.markdown(f"**{item['title']}**")
+        st.code(item["code"], language=item.get("language", "bash"))
+
+    if verify_items:
+        st.markdown("#### What to Verify")
+        for item in verify_items:
+            st.markdown(f"- {item}")
+
+
 def current_bookmark(route: dict, step_index: int) -> dict:
     step = route["steps"][step_index]
     return {
@@ -186,6 +206,8 @@ def render_step(route: dict, progress: dict) -> None:
         st.info(f"Why this matters for hackathon: {step['hackathon_use']}")
         st.success(f"Deliverable: {step['deliverable']}")
         st.link_button("Open Official Docs", step["url"])
+
+        render_local_runbook(step)
 
         if step.get("checks"):
             st.markdown("#### Quick Checks")

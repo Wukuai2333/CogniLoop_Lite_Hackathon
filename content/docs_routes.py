@@ -1,3 +1,90 @@
+WINDOWS_PROJECT_SETUP = """mkdir your-project-name
+cd your-project-name
+
+pip install uv
+uv venv
+.venv\\Scripts\\Activate.ps1
+
+uv pip install cognee python-dotenv"""
+
+POSIX_PROJECT_SETUP = """mkdir your-project-name
+cd your-project-name
+
+pip install uv
+uv venv
+source .venv/bin/activate
+
+uv pip install cognee python-dotenv"""
+
+ENV_TEMPLATE = """LLM_API_KEY=your_api_key_here
+OPENAI_API_KEY=your_api_key_here"""
+
+SMOKE_TEST_SCRIPT = """import asyncio
+import cognee
+from dotenv import load_dotenv
+
+load_dotenv()
+
+async def main():
+    await cognee.add(
+        "Cognee helps developers turn documents and data into AI memory for retrieval-based applications."
+    )
+    await cognee.cognify()
+    results = await cognee.recall("What does Cognee help developers do?")
+    print(results)
+
+asyncio.run(main())"""
+
+SMOKE_TEST_COMMAND = """python smoke_test.py"""
+
+DATA_FOLDER_COMMAND = """mkdir data
+# Add one or two small Markdown files to data before scaling up.
+# Example: data/project_overview.md"""
+
+COGNILOOP_TEMPLATE_COMMAND = """# In CogniLoop Lite, replace or add Markdown files in data/
+streamlit run app.py
+
+# Then open AI Assistant:
+# 1. Initialize /data documents
+# 2. Ask a question
+# 3. Save useful output in notes"""
+
+
+def setup_runbook() -> list[dict]:
+    return [
+        {
+            "title": "Windows setup",
+            "language": "powershell",
+            "code": WINDOWS_PROJECT_SETUP,
+        },
+        {
+            "title": "macOS / Linux setup",
+            "language": "bash",
+            "code": POSIX_PROJECT_SETUP,
+        },
+        {
+            "title": "Create local .env",
+            "language": "dotenv",
+            "code": ENV_TEMPLATE,
+        },
+    ]
+
+
+def quickstart_runbook() -> list[dict]:
+    return [
+        {
+            "title": "Create smoke_test.py",
+            "language": "python",
+            "code": SMOKE_TEST_SCRIPT,
+        },
+        {
+            "title": "Run the smoke test",
+            "language": "bash",
+            "code": SMOKE_TEST_COMMAND,
+        },
+    ]
+
+
 DOC_ROUTES = [
     {
         "id": "fast_start",
@@ -14,6 +101,12 @@ DOC_ROUTES = [
                 "note_prompt": "Write your install path, Python version, package manager, and API key mode.",
                 "beginner_tip": "If you are new, do not customize providers yet. Use the simplest OpenAI setup first.",
                 "checks": ["Python version checked", ".env plan chosen", "Cognee installed in active environment"],
+                "local_steps": setup_runbook(),
+                "verify": [
+                    "`python --version` shows Python 3.10 through 3.14.",
+                    "`python -c \"import cognee; print('cognee ok')\"` prints `cognee ok`.",
+                    "A local `.env` exists, but it is not committed.",
+                ],
                 "questions": ["Which Python environment is running Streamlit?", "Where is my .env file?"],
             },
             {
@@ -25,6 +118,12 @@ DOC_ROUTES = [
                 "note_prompt": "Paste the smoke-test result and one sentence about what it proves.",
                 "beginner_tip": "Keep the first memory item tiny. One paragraph is enough for a useful smoke test.",
                 "checks": ["One item remembered", "One recall question asked", "Output saved in notes"],
+                "local_steps": quickstart_runbook(),
+                "verify": [
+                    "The script finishes without import or API-key errors.",
+                    "The printed result answers from the one paragraph you added.",
+                    "You copied the output or summary into this page's notes.",
+                ],
                 "questions": ["Did recall answer from my content?", "What should my first real dataset be?"],
             },
         ],
@@ -44,6 +143,12 @@ DOC_ROUTES = [
                 "note_prompt": "Write the setup steps your team will include in the README.",
                 "beginner_tip": "Write setup steps as if your teammate has never used Cognee before.",
                 "checks": ["README setup draft started", "API key safety boundary written", "No secrets committed"],
+                "local_steps": setup_runbook(),
+                "verify": [
+                    "A teammate can create the environment from your commands.",
+                    "Your README says to copy `.env.example` to `.env`.",
+                    "Your repo only contains placeholder keys, never real keys.",
+                ],
                 "questions": ["Can another teammate run this?", "What must stay local?"],
             },
             {
@@ -55,6 +160,12 @@ DOC_ROUTES = [
                 "note_prompt": "Describe the first memory item and the first question your app should answer.",
                 "beginner_tip": "A good demo question should be answerable from one or two files.",
                 "checks": ["First user story chosen", "First question drafted", "Expected answer drafted"],
+                "local_steps": quickstart_runbook(),
+                "verify": [
+                    "You can explain what was remembered and what was recalled.",
+                    "Your first real demo question is based on a tiny dataset.",
+                    "The expected answer is specific enough to test.",
+                ],
                 "questions": ["What is the smallest useful demo?", "What answer would convince a judge?"],
             },
             {
@@ -66,6 +177,23 @@ DOC_ROUTES = [
                 "note_prompt": "List your documents, formats, and any parsing concerns.",
                 "beginner_tip": "Start with Markdown or plain text before trying PDFs or complex formats.",
                 "checks": ["File list written", "Format risks identified", "Dataset size kept small"],
+                "local_steps": [
+                    {
+                        "title": "Create a small data folder",
+                        "language": "bash",
+                        "code": DATA_FOLDER_COMMAND,
+                    },
+                    {
+                        "title": "Use the CogniLoop template flow",
+                        "language": "bash",
+                        "code": COGNILOOP_TEMPLATE_COMMAND,
+                    },
+                ],
+                "verify": [
+                    "Your first dataset has only the documents needed for the demo.",
+                    "The files are readable Markdown or plain text before you try harder formats.",
+                    "You know which document should answer your first test question.",
+                ],
                 "questions": ["Are my documents clean enough?", "Do I need a special loader?"],
             },
             {
@@ -77,6 +205,18 @@ DOC_ROUTES = [
                 "note_prompt": "Write the environment variables your project will need.",
                 "beginner_tip": "For a hackathon MVP, prefer defaults unless there is a clear reason to switch providers.",
                 "checks": [".env variables listed", "Provider choices justified", "Storage choice explained"],
+                "local_steps": [
+                    {
+                        "title": "Local .env template",
+                        "language": "dotenv",
+                        "code": ENV_TEMPLATE,
+                    },
+                ],
+                "verify": [
+                    "Your app reads keys from `.env` or environment variables.",
+                    "No page asks users to paste an API key into the browser.",
+                    "Your `.gitignore` excludes `.env` and local storage folders.",
+                ],
                 "questions": ["Am I using cloud or local models?", "Where will local Cognee data live?"],
             },
         ],
@@ -96,6 +236,12 @@ DOC_ROUTES = [
                 "note_prompt": "Write how your assistant will remember and retrieve context.",
                 "beginner_tip": "Explain memory as a user benefit, not as implementation trivia.",
                 "checks": ["Memory explanation written", "Recall example chosen", "User benefit stated"],
+                "local_steps": quickstart_runbook(),
+                "verify": [
+                    "You can describe the remembered item in user language.",
+                    "You have one recall question that proves memory is useful.",
+                    "The answer supports the agent story you want to demo.",
+                ],
                 "questions": ["What does the assistant remember?", "What changes after recall works?"],
             },
             {
@@ -137,6 +283,23 @@ DOC_ROUTES = [
                 "note_prompt": "List the exact docs you will use for the first Q&A demo.",
                 "beginner_tip": "Use fewer, cleaner documents first. Add more only after the first answer works.",
                 "checks": ["Small doc set chosen", "Sensitive files excluded", "First source list written"],
+                "local_steps": [
+                    {
+                        "title": "Start with a small data folder",
+                        "language": "bash",
+                        "code": DATA_FOLDER_COMMAND,
+                    },
+                    {
+                        "title": "Run through CogniLoop Lite",
+                        "language": "bash",
+                        "code": COGNILOOP_TEMPLATE_COMMAND,
+                    },
+                ],
+                "verify": [
+                    "The first dataset is intentionally small.",
+                    "Sensitive or private files are excluded.",
+                    "You have one source document for the first Q&A test.",
+                ],
                 "questions": ["Which files should be excluded?", "What source should answer the first question?"],
             },
             {
@@ -148,6 +311,18 @@ DOC_ROUTES = [
                 "note_prompt": "Write what should happen after your docs are ingested.",
                 "beginner_tip": "Think of this as the build step that prepares memory before users ask questions.",
                 "checks": ["Ingestion flow described", "Expected output named", "Failure cases listed"],
+                "local_steps": [
+                    {
+                        "title": "CogniLoop Lite local flow",
+                        "language": "bash",
+                        "code": COGNILOOP_TEMPLATE_COMMAND,
+                    },
+                ],
+                "verify": [
+                    "You initialized the dataset before asking questions.",
+                    "You know how to reset local storage if ingestion fails.",
+                    "Your notes describe what successful memory preparation means.",
+                ],
                 "questions": ["What does success look like?", "What should happen if ingestion fails?"],
             },
             {
@@ -159,6 +334,12 @@ DOC_ROUTES = [
                 "note_prompt": "Write three questions and what a grounded answer should mention.",
                 "beginner_tip": "Ask one easy question, one comparison question, and one edge-case question.",
                 "checks": ["Three questions drafted", "Expected answer notes written", "Grounding criteria defined"],
+                "local_steps": quickstart_runbook(),
+                "verify": [
+                    "At least one answer clearly uses your provided content.",
+                    "You saved the output and any failure cases in notes.",
+                    "You have a grounded answer standard for your demo.",
+                ],
                 "questions": ["How do I know the answer used my documents?", "What should the assistant refuse?"],
             },
             {
@@ -170,6 +351,18 @@ DOC_ROUTES = [
                 "note_prompt": "Write the BYOK variables and any provider decisions.",
                 "beginner_tip": "Keep `.env` local. Never paste keys into the web UI or commit them.",
                 "checks": [".env template updated", ".gitignore checked", "Provider defaults understood"],
+                "local_steps": [
+                    {
+                        "title": "Local .env template",
+                        "language": "dotenv",
+                        "code": ENV_TEMPLATE,
+                    },
+                ],
+                "verify": [
+                    "Only `.env.example` is committed.",
+                    "Your real `.env` stays local.",
+                    "The hosted demo can still be useful without a key.",
+                ],
                 "questions": ["What variables are safe to show?", "What must never be committed?"],
             },
         ],
