@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import time
 from typing import Any
 
 
@@ -11,6 +12,7 @@ DEFAULT_PROGRESS = {
     "current_step": 0,
     "checks": {},
     "notes": {},
+    "saved_at": None,
 }
 
 
@@ -29,6 +31,7 @@ def load_progress() -> dict[str, Any]:
 
 
 def save_progress(progress: dict[str, Any]) -> None:
+    progress["saved_at"] = time.time()
     PROGRESS_FILE.write_text(json.dumps(progress, indent=2), encoding="utf-8")
 
 

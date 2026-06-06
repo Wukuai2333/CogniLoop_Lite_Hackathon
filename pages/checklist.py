@@ -12,7 +12,7 @@ def render() -> None:
         st.session_state.saved_progress = load_progress()
 
     st.write(
-        "Move one substep at a time, add notes under any optional check, and save progress locally so you can return later."
+        "Move one substep at a time, add notes under any check, and your progress saves locally as you work."
     )
 
     if st.button("Resume Saved Position"):

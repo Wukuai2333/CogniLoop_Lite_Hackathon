@@ -5,6 +5,40 @@ from utils.export import full_markdown, stage_markdown
 from utils.persistence import save_progress, step_key
 
 
+def render_autosave_indicator() -> None:
+    st.markdown(
+        """
+        <style>
+        .autosave-line {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            color: #8b949e;
+            font-size: 0.86rem;
+            margin-top: 0.25rem;
+        }
+        .autosave-dot {
+            width: 0.55rem;
+            height: 0.55rem;
+            border-radius: 999px;
+            background: #2ea043;
+            animation: autosavePulse 1.4s ease-in-out infinite;
+        }
+        @keyframes autosavePulse {
+            0% { opacity: 0.35; transform: scale(0.86); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.35; transform: scale(0.86); }
+        }
+        </style>
+        <div class="autosave-line">
+            <span class="autosave-dot"></span>
+            <span>Auto saved</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def clamp_position(progress: dict) -> None:
     progress["current_stage"] = max(0, min(progress["current_stage"], len(CHECKLIST_STAGES) - 1))
     stage = CHECKLIST_STAGES[progress["current_stage"]]
@@ -81,7 +115,7 @@ def render_reader(progress: dict) -> None:
         st.info(item["detail"])
 
         checked = st.checkbox(
-            "Mark this optional check as done",
+            "Mark as done",
             value=bool(progress["checks"].get(key)),
             key=f"reader_check::{key}",
         )
@@ -94,6 +128,7 @@ def render_reader(progress: dict) -> None:
 
         progress["checks"][key] = checked
         progress["notes"][key] = note
+        save_progress(progress)
 
         nav1, nav2, nav3 = st.columns([1, 1, 2])
         with nav1:
@@ -108,9 +143,7 @@ def render_reader(progress: dict) -> None:
                 move(progress, 1)
                 st.rerun()
         with nav3:
-            if st.button("Save Progress", type="primary", use_container_width=True):
-                save_progress(progress)
-                st.toast("Progress saved locally.")
+            render_autosave_indicator()
 
     with right:
         render_stage_picker(progress)
