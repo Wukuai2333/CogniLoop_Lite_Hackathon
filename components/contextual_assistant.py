@@ -33,8 +33,6 @@ def inject_selection_assistant(page_key: str) -> None:
                         position: fixed;
                         z-index: 2147483647;
                         display: none;
-                        right: 1.25rem;
-                        bottom: 1.25rem;
                         max-width: min(420px, calc(100vw - 2rem));
                         grid-template-columns: minmax(0, 1fr) auto;
                         align-items: center;
@@ -110,6 +108,25 @@ def inject_selection_assistant(page_key: str) -> None:
                 lastSelectedText = text;
                 const preview = bar.querySelector('[data-role="preview"]');
                 preview.textContent = text.length > 120 ? text.slice(0, 120) + "..." : text;
+
+                const selection = parentWindow.getSelection() || parentDoc.getSelection();
+                let left = parentWindow.innerWidth - 440;
+                let top = parentWindow.innerHeight - 110;
+                if (selection && selection.rangeCount > 0) {{
+                    const rect = selection.getRangeAt(0).getBoundingClientRect();
+                    if (rect && (rect.width || rect.height)) {{
+                        left = rect.left + rect.width / 2 - 170;
+                        top = rect.top - 72;
+                        if (top < 12) {{
+                            top = rect.bottom + 12;
+                        }}
+                    }}
+                }}
+
+                left = Math.min(Math.max(left, 12), parentWindow.innerWidth - 432);
+                top = Math.min(Math.max(top, 12), parentWindow.innerHeight - 104);
+                bar.style.left = `${{left}}px`;
+                bar.style.top = `${{top}}px`;
                 bar.style.display = "grid";
             }}
 
