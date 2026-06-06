@@ -11,6 +11,10 @@ env/
 # Secrets
 .env
 
+# Private planning briefs
+PRODUCT_BRIEF.md
+MENTOR_BRIEF.md
+
 # Streamlit and local state
 .streamlit/secrets.toml
 .cogniloop_progress.json
