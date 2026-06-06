@@ -12,6 +12,7 @@ DEFAULT_PROGRESS = {
     "current_step": 0,
     "checks": {},
     "notes": {},
+    "bookmarks": [],
     "saved_at": None,
 }
 

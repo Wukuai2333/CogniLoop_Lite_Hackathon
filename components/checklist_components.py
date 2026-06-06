@@ -39,6 +39,56 @@ def render_autosave_indicator() -> None:
     )
 
 
+def current_bookmark(progress: dict) -> dict:
+    stage_index = progress["current_stage"]
+    step_index = progress["current_step"]
+    stage = CHECKLIST_STAGES[stage_index]
+    item = stage["items"][step_index]
+    return {
+        "stage_index": stage_index,
+        "step_index": step_index,
+        "stage_id": stage["id"],
+        "stage_title": stage["title"],
+        "step_title": item["text"],
+    }
+
+
+def bookmark_label(bookmark: dict) -> str:
+    return (
+        f"{bookmark['stage_title']} · Step {bookmark['step_index'] + 1}: "
+        f"{bookmark['step_title']}"
+    )
+
+
+def render_bookmarks(progress: dict) -> None:
+    col1, col2 = st.columns([0.18, 0.82])
+    with col1:
+        if st.button("Add Bookmark", use_container_width=True):
+            progress.setdefault("bookmarks", []).append(current_bookmark(progress))
+            save_progress(progress)
+            st.toast("Bookmark added.")
+            st.rerun()
+    with col2:
+        bookmarks = progress.setdefault("bookmarks", [])
+        title = f"Resume Bookmarks ({len(bookmarks)})"
+        with st.expander(title, expanded=False):
+            if not bookmarks:
+                st.caption("No bookmarks yet. Add one from any substep.")
+            for index, bookmark in enumerate(bookmarks):
+                jump, remove = st.columns([0.82, 0.18])
+                with jump:
+                    if st.button(bookmark_label(bookmark), key=f"bookmark_jump::{index}", use_container_width=True):
+                        progress["current_stage"] = bookmark["stage_index"]
+                        progress["current_step"] = bookmark["step_index"]
+                        save_progress(progress)
+                        st.rerun()
+                with remove:
+                    if st.button("Remove", key=f"bookmark_remove::{index}", use_container_width=True):
+                        bookmarks.pop(index)
+                        save_progress(progress)
+                        st.rerun()
+
+
 def clamp_position(progress: dict) -> None:
     progress["current_stage"] = max(0, min(progress["current_stage"], len(CHECKLIST_STAGES) - 1))
     stage = CHECKLIST_STAGES[progress["current_stage"]]
@@ -104,8 +154,14 @@ def render_reader(progress: dict) -> None:
     key = step_key(stage["id"], step_index)
 
     completed, total = total_counts(progress)
-    st.progress(completed / total if total else 0)
-    st.caption(f"Overall progress: {completed} / {total} checks completed")
+    top_left, top_right = st.columns([0.78, 0.22])
+    with top_left:
+        st.progress(completed / total if total else 0)
+        st.caption(f"Overall progress: {completed} / {total} checks completed")
+    with top_right:
+        render_autosave_indicator()
+
+    render_bookmarks(progress)
 
     left, right = st.columns([0.72, 0.28])
     with left:
@@ -130,7 +186,7 @@ def render_reader(progress: dict) -> None:
         progress["notes"][key] = note
         save_progress(progress)
 
-        nav1, nav2, nav3 = st.columns([1, 1, 2])
+        nav1, nav2 = st.columns(2)
         with nav1:
             if st.button("Previous", use_container_width=True, disabled=stage_index == 0 and step_index == 0):
                 save_progress(progress)
@@ -142,8 +198,6 @@ def render_reader(progress: dict) -> None:
                 save_progress(progress)
                 move(progress, 1)
                 st.rerun()
-        with nav3:
-            render_autosave_indicator()
 
     with right:
         render_stage_picker(progress)
